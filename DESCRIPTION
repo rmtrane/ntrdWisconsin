@@ -56,7 +56,7 @@ Collate:
     'nacc_to_wadrc_uds2.R'
     'nacc_to_wadrc_uds3.R'
     'nacc_to_wadrc_uds4.R'
-    'npsych_scores-NACCGDS.R'
+    'npsych_scores-CESDTOTAL.R'
     'ntrdWisconsin-package.R'
     'query_panda.R'
     'wadrc_data_prep.R'

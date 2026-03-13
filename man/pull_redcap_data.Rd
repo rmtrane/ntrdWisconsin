@@ -18,5 +18,9 @@ A prepared data table from \code{wadrc_data_prep()}. If the data pull fails,
 it returns \code{NULL} and will show a notification in a Shiny app or emit a warning.
 }
 \description{
-A short description...
+Pulls data from a WADRC REDCap database using the provided API token,
+then prepares it via \code{\link[=wadrc_data_prep]{wadrc_data_prep()}}.
+}
+\seealso{
+\code{\link[=wadrc_source]{wadrc_source()}}, \link{wadrc_uds3_redcap_fields}
 }

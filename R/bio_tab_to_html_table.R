@@ -1,7 +1,9 @@
 #' Convert biomarker data table to HTML table
 #'
 #' @description
-#' A short description...
+#' Converts a list of biomarker `data.table`s (as returned by [bio_tab_for_gt()])
+#' into an interactive HTML table with inline density plots, threshold indicators,
+#' and tooltip info icons for use in a Shiny application.
 #'
 #' @param tab_for_gt A list of `data.table`s, where each `data.table` is named after the Panda table that was queried to get the data.
 #' @param densities A list of density data.
@@ -12,6 +14,8 @@
 #' @returns
 #' A `shiny::tagList` object representing the HTML table. Will error if `tab_for_gt` is not
 #' a list of `data.table`s as expected.
+#'
+#' @seealso [density_plot()], [create_thresholds_table()]
 #'
 #' @export
 bio_tab_to_html_table <- function(
@@ -482,6 +486,27 @@ bio_tab_to_html_table <- function(
 }
 
 
+#' Create a table cell (`<td>`) element
+#'
+#' Builds an HTML `<td>` element for a single cell in the biomarker table,
+#' handling special rendering for different column types (name, method, info,
+#' age, numeric with density plots, etc.).
+#'
+#' @param y Cell value.
+#' @param idy Column name.
+#' @param cell_id Unique identifier for this cell.
+#' @param is_age Logical; whether this column represents an age value.
+#' @param class CSS class string for the cell.
+#' @param true_visits Character vector of column names that represent actual visits.
+#' @param prev_col Previous column value (for border logic).
+#' @param next_col Next column value (for border logic).
+#' @param plot_title Optional plot title for density plots.
+#' @param cur_dens Density data for this biomarker.
+#' @param cur_cut Cut-off data for this biomarker.
+#'
+#' @returns A `shiny::tags$td` element.
+#'
+#' @keywords internal
 create_td <- function(
   y,
   idy,
@@ -650,6 +675,21 @@ create_td <- function(
 }
 
 
+#' Render cell content with icon, value, and density plot
+#'
+#' Creates the inner content of a biomarker table cell, including a status
+#' icon, the formatted text value, and an optional inline density plot
+#' triggered on click.
+#'
+#' @param cell A list with elements `icon`, `text`, and optionally `raw`.
+#' @param cell_id Unique identifier for this cell.
+#' @param plot_title Title for the density plot hover box.
+#' @param dens Density data for the biomarker.
+#' @param cur_cuts Cut-off thresholds for the biomarker.
+#'
+#' @returns A `shiny::tags$div` element.
+#'
+#' @keywords internal
 cell_content <- function(
   cell,
   cell_id,

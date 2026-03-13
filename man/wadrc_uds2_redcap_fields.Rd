@@ -5,12 +5,16 @@
 \alias{wadrc_uds2_redcap_fields}
 \title{Fields to pull from WADRC UDS-2 REDCap}
 \format{
-Character vector with names of fields we pull from the WADRC UDS-2 REDCap database
+A character vector of REDCap field names to pull from the WADRC
+UDS-2 database via \code{\link[=pull_redcap_data]{pull_redcap_data()}}.
 }
 \usage{
 wadrc_uds2_redcap_fields
 }
 \description{
 Fields to pull from WADRC UDS-2 REDCap
+}
+\seealso{
+\code{\link[=pull_redcap_data]{pull_redcap_data()}}, \link{nacc_to_wadrc_uds2}
 }
 \keyword{datasets}

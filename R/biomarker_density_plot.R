@@ -1,7 +1,8 @@
 #' Plot density
 #'
 #' @description
-#' A short description...
+#' Creates a `plotly` density plot for a biomarker, optionally highlighting the
+#' observed value and shading regions defined by cut-off thresholds.
 #'
 #' @param obs A numeric value. Optional.
 #' @param dens A list or data frame containing density `x` and `y` values.
@@ -12,6 +13,8 @@
 #'
 #' @returns
 #' A `plotly` object. Returns `NULL` invisibly if `obs` is `NA`.
+#'
+#' @seealso [bio_tab_to_html_table()]
 #'
 #' @export
 density_plot <- function(

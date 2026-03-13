@@ -7,11 +7,13 @@
 #' @returns
 #' An object of class `CESDTOTAL`.
 #'
+#' @examples
+#' CESDTOTAL(c(5, 12, NA, 30))
+#'
 #' @export
 CESDTOTAL <- ntrs::new_npsych_scores(
   "CESDTOTAL",
   label = "CES-D Total Score",
   domain = "Mood",
-  range = c(0, 60),
-  codes = c()
+  range = c(0, 60)
 )

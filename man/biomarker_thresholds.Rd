@@ -5,12 +5,23 @@
 \alias{biomarker_thresholds}
 \title{Rules for Categorizing Biomarkers}
 \format{
-List of lists of lists such that \code{biomarker_thresholds[[table_name]][[biomarker]]} gives a list with entries \code{source} (list with \code{description} indicating where the categorization is described, and \code{link}), and \code{thresholds} (a \code{data.frame} with columns \code{label}, \code{min}, \code{max}, and \code{bin} describing categories).
+A nested list indexed by Panda table name (e.g., \code{"HDX Plasma - pTau217"},
+\code{"Lumipulse CSF - ABeta"}) and then by biomarker name. Each entry contains:
+\describe{
+\item{source}{A list with \code{description} (character) and \code{link} (URL) indicating
+where the categorization is described.}
+\item{thresholds}{A \code{data.frame} with columns \code{label}, \code{min}, \code{max}, and \code{bin}
+describing the categories.}
+}
 }
 \usage{
 biomarker_thresholds
 }
 \description{
-Rules for Categorizing Biomarkers
+Predefined thresholds for categorizing biomarker values (e.g., positive vs.
+negative) based on published guidelines and FDA documents.
+}
+\seealso{
+\code{\link[=categorize_ratio]{categorize_ratio()}}, \code{\link[=create_thresholds_table]{create_thresholds_table()}}
 }
 \keyword{datasets}

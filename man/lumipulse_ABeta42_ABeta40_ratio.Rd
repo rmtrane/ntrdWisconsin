@@ -19,3 +19,10 @@ For details, see \href{https://www.accessdata.fda.gov/cdrh_docs/pdf20/DEN200072.
 \description{
 Take vectors of ABeta40 and ABeta42 values and return the ratio.
 }
+\examples{
+lumipulse_ABeta42_ABeta40_ratio(ABeta40 = c(5000, 100, 30000), ABeta42 = c(800, 40, 2500))
+
+}
+\seealso{
+\code{\link[=lumipulse_pTau217_ABeta42_ratio]{lumipulse_pTau217_ABeta42_ratio()}}, \code{\link[=categorize_ratio]{categorize_ratio()}}
+}

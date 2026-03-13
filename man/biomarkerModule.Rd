@@ -40,10 +40,12 @@ NULL.
 A \code{shinyApp} object.
 }
 \description{
-A short description...
+Shiny UI module that provides a placeholder for the biomarker results table.
 
-A short description...
+Shiny server module that fetches biomarker data from the Panda API for
+a given participant, caches results, and renders the interactive HTML table.
 
-A short description...
+Creates a standalone Shiny app for viewing biomarker data, wrapping
+\code{\link[=extension_ui]{extension_ui()}} and \code{\link[=extension_server]{extension_server()}}.
 }
 \keyword{internal}

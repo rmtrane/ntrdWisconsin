@@ -1,7 +1,7 @@
 #' Biomarker UI
 #'
 #' @description
-#' A short description...
+#' Shiny UI module that provides a placeholder for the biomarker results table.
 #'
 #' @param id A string used to namespace the module.
 #'
@@ -20,7 +20,8 @@ extension_ui <- function(id = "biomarker-tables") {
 #' Biomarker server
 #'
 #' @description
-#' A short description...
+#' Shiny server module that fetches biomarker data from the Panda API for
+#' a given participant, caches results, and renders the interactive HTML table.
 #'
 #' @param id A string used to namespace the module.
 #' @param ptid A reactive value specifying the ADRC patient ID.
@@ -241,7 +242,8 @@ extension_server <- function(
 #' Biomarker app
 #'
 #' @description
-#' A short description...
+#' Creates a standalone Shiny app for viewing biomarker data, wrapping
+#' [extension_ui()] and [extension_server()].
 #'
 #' @param ptid ADRC ptid. A character vector with patient ID's that can be chosen.
 #' @param biomarker_api Panda API key.

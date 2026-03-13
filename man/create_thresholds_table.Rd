@@ -15,3 +15,15 @@ A \code{shiny::HTML} object representing an HTML table of the thresholds.
 \description{
 Create HTML table to include in tooltip for info column of bio_tab_to_html_table.
 }
+\examples{
+thres <- data.frame(
+  label = c("Negative", "Positive"),
+  min = c(0, 0.05),
+  max = c(0.05, Inf)
+)
+create_thresholds_table(thres)
+
+}
+\seealso{
+\code{\link[=bio_tab_to_html_table]{bio_tab_to_html_table()}}
+}

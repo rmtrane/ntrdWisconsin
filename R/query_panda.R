@@ -488,7 +488,8 @@ bio_tab_for_gt <- function(
 #' Transform a table to a gt object
 #'
 #' @description
-#' A short description...
+#' Converts a formatted biomarker `data.table` (or list of `data.table`s) into
+#' a styled [gt::gt()] table, using list names as row groups when applicable.
 #'
 #' @param tab_for_gt A `data.table` or a `list` of `data.table`s.
 #'
@@ -591,6 +592,18 @@ bio_tab_to_gt <- function(tab_for_gt) {
 }
 
 
+#' Fetch all biomarker values from Panda
+#'
+#' Queries the Panda API for all biomarker data across all tables (excluding
+#' Participants, Appointments, and Visual Rating tables). Used to compute
+#' population-level density estimates and threshold cut-offs.
+#'
+#' @param api_key A single string. Panda API key.
+#' @param base_query_file Path to the JSON query template file.
+#'
+#' @returns A named list of `data.table`s, one per biomarker table.
+#'
+#' @keywords internal
 get_all_values <- function(
   api_key = getOption("panda_api_key"),
   base_query_file = system.file(
@@ -698,6 +711,18 @@ get_all_values <- function(
 }
 
 
+#' Extract cut-off thresholds from biomarker data
+#'
+#' For biomarkers with predefined thresholds in [biomarker_thresholds], those
+#' are used. Otherwise, thresholds are inferred from the data by finding
+#' boundaries between bin categories.
+#'
+#' @param all_values A named list of `data.table`s as returned by `get_all_values()`.
+#'
+#' @returns A named list of `data.table`s with columns `name`, `bin`, `color`,
+#'   `min_obs`, and `max_obs`.
+#'
+#' @keywords internal
 get_all_cuts <- function(all_values) {
   # To avoid notes in R CMD check
   name <- NULL
@@ -796,6 +821,16 @@ get_all_cuts <- function(all_values) {
 }
 
 
+#' Compute kernel density estimates for all biomarkers
+#'
+#' Calculates Gaussian kernel density estimates for each raw biomarker column,
+#' using Sheather-Jones bandwidth selection.
+#'
+#' @param all_values A named list of `data.table`s as returned by `get_all_values()`.
+#'
+#' @returns A named list of density objects, nested by table and biomarker name.
+#'
+#' @keywords internal
 get_all_densities <- function(all_values) {
   purrr::map(all_values, \(x) {
     if (is.null(x) | nrow(x) == 0 | inherits(x, "try-error")) {
@@ -831,6 +866,18 @@ get_all_densities <- function(all_values) {
 }
 
 
+#' Check Panda API connectivity
+#'
+#' Makes a lightweight test request to the Panda API to verify that the
+#' server is reachable and the API key is valid.
+#'
+#' @param api_key A single string. Panda API key.
+#' @param timeout Timeout in seconds for the test request.
+#'
+#' @returns A list with `connected` (logical), `status` (HTTP status code or
+#'   `NA`), and `message` (character).
+#'
+#' @keywords internal
 check_connection <- function(
   api_key = getOption("panda_api_key"),
   timeout = 5

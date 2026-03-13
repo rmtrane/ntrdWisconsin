@@ -1,9 +1,15 @@
-#' Function to Prepare WADRC UDS-3 Data
+#' Prepare WADRC UDS Data
+#'
+#' Renames columns from WADRC REDCap variable names to NACC variable names,
+#' fills missing data within and across visits, and returns a cleaned
+#' `data.table` ready for downstream use.
 #'
 #' @param adrc_data Data as gotten from WADRC REDCap database.
 #'  Could be a complete download to .csv file, then read into R,
 #'  or pulled directly from REDCap using the `REDCapR` package.
-#' @param uds Spefify if data are from UDS-2, UDS-3 or UDS-4 database.
+#' @param uds Specify if data are from UDS-2, UDS-3, or UDS-4 database.
+#'
+#' @seealso [pull_redcap_data()]
 #'
 #' @keywords internal
 wadrc_data_prep <- function(
@@ -287,6 +293,19 @@ wadrc_data_prep <- function(
 }
 
 
+#' Return a single unique non-NA value
+#'
+#' Given a vector, returns the single unique non-`NA` value if one exists.
+#' If all values are `NA`, returns `NA`. If multiple unique non-`NA` values
+#' exist, returns `if_multiple`.
+#'
+#' @param x A vector.
+#' @param if_multiple Value to return when multiple unique non-`NA` values
+#'   exist. Defaults to `NA`.
+#'
+#' @returns A single value.
+#'
+#' @keywords internal
 return_single <- function(x, if_multiple = NA) {
   if (all(is.na(x))) {
     return(NA)
@@ -306,6 +325,24 @@ return_single <- function(x, if_multiple = NA) {
 }
 
 
+#' Fill missing data within and across visits
+#'
+#' Fills `NA` values in a `data.table` using last-observation-carried-forward
+#' and next-observation-carried-backward, first within visits, then across
+#' visits for each participant. Handles both numeric and character columns.
+#'
+#' @param out A `data.table` with visit-level data.
+#' @param ptid Column name for participant ID.
+#' @param visityr Column name for visit year.
+#' @param visitmo Column name for visit month.
+#' @param visitday Column name for visit day.
+#' @param educ Column name for education.
+#' @param constant_across_visits Character vector of column names that should
+#'   be constant across visits for a participant (e.g., sex, race).
+#'
+#' @returns The input `data.table`, modified in place with filled values.
+#'
+#' @keywords internal
 fill_data_downup <- function(
   out,
   ptid = "ptid",
