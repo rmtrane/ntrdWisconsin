@@ -1,0 +1,81 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "MK6240_NFT_Rating",
+        "id": 865,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "subjectid_mk6240",
+            "id": 11279,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": [
+              {
+                "operator": "contains",
+                "values": "'adrc'"
+              }
+            ]
+          },
+          {
+            "name": "comment",
+            "id": 11284,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_1",
+            "id": 19153,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_2",
+            "id": 19154,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_3",
+            "id": 19155,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_4",
+            "id": 19156,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_5",
+            "id": 19157,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_6",
+            "id": 19158,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ],
+    "offset": 0,
+    "limit": -1,
+    "format": "csv",
+    "row_format": "participant_centric",
+    "name": null,
+    "save": null
+  }
+}

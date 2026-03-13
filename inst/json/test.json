@@ -1,0 +1,63 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "Vgroups",
+        "id": 671,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "Vgroup_id",
+            "id": 675,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "Date (vgroup)",
+            "id": 674,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "PIB Visual Rating 20180126",
+        "id": 845,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "rating_0_1_2_3",
+            "id": 10364,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": [
+              {
+                "operator": "=",
+                "values": [
+                  "'0'"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "id",
+            "id": 53428,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ],
+    "offset": 0,
+    "limit": -1,
+    "format": "csv",
+    "row_format": "visit_centric",
+    "name": null,
+    "save": null
+  }
+}

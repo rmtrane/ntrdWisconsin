@@ -1,0 +1,104 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "NTK2 MultiObs - CSF, 20230311",
+        "id": 1233,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "LPdate",
+            "id": 45565,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "reggieid",
+            "id": 45566,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "age_lp",
+            "id": 45575,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_42",
+            "id": 45581,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "tTau",
+            "id": 45582,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau",
+            "id": 45586,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_40",
+            "id": 45589,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_42_40_derived",
+            "id": 45592,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_ABeta_1_42_derived",
+            "id": 45593,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_42_40_bin",
+            "id": 45595,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_Abeta_42_bin",
+            "id": 45596,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_bin",
+            "id": 45597,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ],
+    "offset": 0,
+    "limit": -1,
+    "format": "csv",
+    "row_format": "participant_centric",
+    "name": null,
+    "save": null
+  }
+}

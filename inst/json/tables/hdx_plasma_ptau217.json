@@ -1,0 +1,53 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "HDX Plasma - pTau217",
+        "id": 1347,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "age_at_appointment",
+            "id": 53614,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "enumber",
+            "id": 53619,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "obtained_date",
+            "id": 53622,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "mean_conc",
+            "id": 53637,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": [
+              {
+                "operator": "is not blank",
+                "values": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "offset": 0,
+    "limit": -1,
+    "format": "csv",
+    "row_format": "participant_centric",
+    "name": null,
+    "save": null
+  }
+}

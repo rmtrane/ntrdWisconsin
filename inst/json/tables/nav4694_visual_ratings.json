@@ -1,0 +1,63 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "NAV4694 Visual Ratings",
+        "id": 1235,
+        "class": "cg_tn",
+        "join": "inner",
+        "columns": [
+          {
+            "name": "subjectid",
+            "id": 45647,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "rating_0_1_2_3",
+            "id": 45651,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "PET Appointments",
+        "id": 674,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "id",
+            "id": 53821,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "Petscan date",
+            "id": 719,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "Age at Appointment",
+            "id": 747,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ],
+    "offset": 0,
+    "limit": -1,
+    "format": "csv",
+    "row_format": "participant_centric",
+    "name": null,
+    "save": null
+  }
+}

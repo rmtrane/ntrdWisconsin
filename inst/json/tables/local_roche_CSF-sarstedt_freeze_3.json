@@ -1,0 +1,125 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "Local Roche CSF - Sarstedt freeze 3",
+        "id": 1330,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "reggieid",
+            "id": 52805,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "age_lp",
+            "id": 52807,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "sample_date",
+            "id": 52808,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau",
+            "id": 52809,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "tTau",
+            "id": 52810,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_bin",
+            "id": 52811,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "tTau_bin",
+            "id": 52812,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_42_gen1",
+            "id": 52824,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_42_gen1_bin",
+            "id": 52825,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_ABeta_1_42_gen1_derived",
+            "id": 52826,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_ABeta_1_42_gen1_derived_bin",
+            "id": 52827,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_42_gen2",
+            "id": 52828,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_42_gen2_bin",
+            "id": 52829,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_ABeta_1_42_gen2_derived",
+            "id": 52830,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_ABeta_1_42_gen2_derived_bin",
+            "id": 52831,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ],
+    "offset": 0,
+    "limit": -1,
+    "format": "csv",
+    "row_format": "participant_centric",
+    "name": null,
+    "save": null
+  }
+}

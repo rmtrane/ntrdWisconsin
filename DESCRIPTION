@@ -1,0 +1,70 @@
+Package: ntrdWisconsin
+Title: Neuropsychological Test Result Dashboards for ADRC Wisconsin
+Version: 0.0.0.9000
+Authors@R: 
+    person(
+        given = "Ralph", 
+        family = "Møller Trane", 
+        email = "rmtrane@gmail.com", 
+        role = c("aut", "cre"), 
+        comment = c(ORCID = "0000-0001-7824-1785")
+    )
+Description: Extension to `ntrd` for the Wisconsin ADRC to import 
+    neuropsychological data directly from REDCap and biomarker data
+    from Panda.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports: 
+    S7,
+    ntrd,
+    ntrs,
+    data.table,
+    httr2,
+    mirai,
+    jsonlite,
+    methods,
+    REDCapR,
+    bslib,
+    gt,
+    lubridate,
+    plotly,
+    purrr,
+    rlang,
+    shiny,
+    cli,
+    ntrsTscores
+Depends: 
+    R (>= 4.1.0)
+Remotes:
+    rmtrane/ntrs,
+    rmtrane/ntrsTscores
+Config/ntrd/extension: true
+Collate: 
+    'bio_tab_to_html_table.R'
+    'biomarker_density_plot.R'
+    'biomarker_ratios.R'
+    'biomarker_thresholds.R'
+    'clean_biomarker_data.R'
+    'create_threshold_table.R'
+    'wadrc_source.R'
+    'data_load.R'
+    'data_source_server.R'
+    'data_source_ui.R'
+    'extensionModule.R'
+    'nacc_to_wadrc_uds2.R'
+    'nacc_to_wadrc_uds3.R'
+    'nacc_to_wadrc_uds4.R'
+    'npsych_scores-NACCGDS.R'
+    'ntrdWisconsin-package.R'
+    'query_panda.R'
+    'wadrc_data_prep.R'
+    'wadrc_uds2_redcap_fields.R'
+    'wadrc_uds2_to_nacc.R'
+    'wadrc_uds3_redcap_fields.R'
+    'wadrc_uds3_to_nacc.R'
+    'wadrc_uds4_redcap_fields.R'
+    'wadrc_uds4_to_nacc.R'
+    'zzz.R'
+LazyData: true

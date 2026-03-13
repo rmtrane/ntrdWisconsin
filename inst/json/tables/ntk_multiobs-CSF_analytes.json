@@ -1,0 +1,111 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "NTK MultiObs - CSF analytes",
+        "id": 1043,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "Reggieid",
+            "id": 27110,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "age_lp",
+            "id": 27112,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_40",
+            "id": 27124,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_42",
+            "id": 27125,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau",
+            "id": 27130,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "tTau",
+            "id": 27133,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_1_42_40_derived",
+            "id": 27135,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_ABeta_1_42_derived",
+            "id": 27136,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "tTau_ABeta_1_42_derived",
+            "id": 27137,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "Inv_ABeta_1_42_derived",
+            "id": 27138,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "ABeta_42_40_bin",
+            "id": 27139,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_Abeta42_bin",
+            "id": 27140,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "pTau_bin",
+            "id": 27141,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ],
+    "offset": 0,
+    "limit": -1,
+    "format": "csv",
+    "row_format": "participant_centric",
+    "name": null,
+    "save": null
+  }
+}
