@@ -6,15 +6,8 @@
 #' `name = "Wisconsin ADRC"` and `id = "wadrc_redcap"`.
 #'
 #' @export
-wadrc_source <- S7::new_class(
-  "wadrc_source",
-  parent = ntrd::data_source,
-  constructor = function() {
-    S7::new_object(
-      ntrd::data_source(
-        name = "Wisconsin ADRC",
-        id = "wadrc_redcap"
-      )
-    )
-  }
+wadrc_source <- ntrd::new_data_source(
+  id = "wadrc_redcap",
+  name = "Wisconsin ADRC",
+  package = "ntrdWisconsin"
 )

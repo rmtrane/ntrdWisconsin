@@ -12,8 +12,11 @@
 #'
 #' @keywords internal
 extension_ui <- function(id = "biomarker-tables") {
-  shiny::tagList(
-    shiny::uiOutput(shiny::NS(id, "biomarker_table"))
+  bslib::nav_panel(
+    title = "Biomarkers",
+    shiny::tagList(
+      shiny::uiOutput(shiny::NS(id, "biomarker_table"))
+    )
   )
 }
 

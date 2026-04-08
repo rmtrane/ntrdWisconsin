@@ -39,7 +39,8 @@ Depends:
     R (>= 4.1.0)
 Remotes:
     rmtrane/ntrs,
-    rmtrane/ntrsTscores
+    rmtrane/ntrsTscores,
+    rmtrane/ntrd
 Config/ntrd/extension: true
 Collate: 
     'bio_tab_to_html_table.R'
@@ -56,7 +57,7 @@ Collate:
     'nacc_to_wadrc_uds2.R'
     'nacc_to_wadrc_uds3.R'
     'nacc_to_wadrc_uds4.R'
-    'npsych_scores-NACCGDS.R'
+    'npsych_scores-CESDTOTAL.R'
     'ntrdWisconsin-package.R'
     'query_panda.R'
     'wadrc_data_prep.R'
