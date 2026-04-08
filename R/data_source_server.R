@@ -96,6 +96,15 @@ S7::method(data_source_server, wadrc_source) <- function(source, id) {
       if (panda_access) {
         extras$panda_api_token <- input$panda_api_token
       }
+
+      if (
+        !panda_access |
+          is.null(input$panda_api_token) ||
+          input$panda_api_token == ""
+      ) {
+        extras$extension_ui <- NULL
+        extras$extension_server <- NULL
+      }
     })
 
     all_values_et <- shiny::ExtendedTask$new(
