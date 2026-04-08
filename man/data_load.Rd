@@ -20,6 +20,10 @@ If no data is retrieved from any UDS, \code{NULL} is returned and an error notif
 Notifications are displayed within a Shiny application to indicate data loading progress and completion.
 }
 \description{
-A short description...
+Pulls UDS-2, UDS-3, and UDS-4 data from the WADRC REDCap databases,
+prepares each dataset, combines them, and computes derived neuropsych scores.
+}
+\seealso{
+\code{\link[=pull_redcap_data]{pull_redcap_data()}}, \code{\link[=wadrc_source]{wadrc_source()}}
 }
 \keyword{internal}

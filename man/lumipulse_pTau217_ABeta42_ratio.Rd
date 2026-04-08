@@ -20,3 +20,10 @@ in \code{NA} or \code{0.047} in the returned ratio. For more details, see \href{
 \description{
 Take vectors of pTau217 and ABeta42 values and return the ratio according to FDA guidance.
 }
+\examples{
+lumipulse_pTau217_ABeta42_ratio(pTau217 = c(1.5, 0.03, 600), ABeta42 = c(300, 50, 2))
+
+}
+\seealso{
+\code{\link[=lumipulse_ABeta42_ABeta40_ratio]{lumipulse_ABeta42_ABeta40_ratio()}}, \code{\link[=categorize_ratio]{categorize_ratio()}}
+}

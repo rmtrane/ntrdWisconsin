@@ -15,3 +15,7 @@ An object of class \code{CESDTOTAL}.
 \description{
 Create a \code{CESDTOTAL} object to hold CES-D Total scores
 }
+\examples{
+CESDTOTAL(c(5, 12, NA, 30))
+
+}

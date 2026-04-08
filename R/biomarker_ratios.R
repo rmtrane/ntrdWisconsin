@@ -12,6 +12,11 @@
 #' under specific conditions. Certain combinations of input values will result
 #' in `NA` or `0.047` in the returned ratio. For more details, see [this FDA document](https://www.accessdata.fda.gov/cdrh_docs/reviews/K242706.pdf)
 #'
+#' @seealso [lumipulse_ABeta42_ABeta40_ratio()], [categorize_ratio()]
+#'
+#' @examples
+#' lumipulse_pTau217_ABeta42_ratio(pTau217 = c(1.5, 0.03, 600), ABeta42 = c(300, 50, 2))
+#'
 #' @export
 lumipulse_pTau217_ABeta42_ratio <- function(pTau217, ABeta42) {
   # See https://www.accessdata.fda.gov/cdrh_docs/reviews/K242706.pdf for reasoning behind these adjustments
@@ -45,6 +50,11 @@ lumipulse_pTau217_ABeta42_ratio <- function(pTau217, ABeta42) {
 #' capped at 2200. Ratios will be `NA` if `ABeta42 < 38`, `ABeta40 < 158`, or `ABeta40 > 28450`.
 #' For details, see [this FDA document](https://www.accessdata.fda.gov/cdrh_docs/pdf20/DEN200072.pdf).
 #'
+#' @seealso [lumipulse_pTau217_ABeta42_ratio()], [categorize_ratio()]
+#'
+#' @examples
+#' lumipulse_ABeta42_ABeta40_ratio(ABeta40 = c(5000, 100, 30000), ABeta42 = c(800, 40, 2500))
+#'
 #' @export
 lumipulse_ABeta42_ABeta40_ratio <- function(ABeta40, ABeta42) {
   # See https://www.accessdata.fda.gov/cdrh_docs/pdf20/DEN200072.pdf for details on adjustments made
@@ -60,7 +70,7 @@ lumipulse_ABeta42_ABeta40_ratio <- function(ABeta40, ABeta42) {
 #' Categorize a ratio
 #'
 #' @description
-#' A short description...
+#' Assigns a category label or bin to a numeric ratio based on threshold ranges.
 #'
 #' @param ratio A single numeric value.
 #' @param thresholds A data frame or list with `label`, `bin`, `min`, and `max` elements.
@@ -68,6 +78,18 @@ lumipulse_ABeta42_ABeta40_ratio <- function(ABeta40, ABeta42) {
 #'
 #' @returns
 #' A single value (a label or a bin identifier) from the `thresholds` object. Returns `NA` if `ratio` falls outside the defined thresholds.
+#'
+#' @seealso [lumipulse_pTau217_ABeta42_ratio()], [lumipulse_ABeta42_ABeta40_ratio()]
+#'
+#' @examples
+#' thres <- data.frame(
+#'   label = c("Negative", "Positive"),
+#'   bin = c(0, 1),
+#'   min = c(0, 0.05),
+#'   max = c(0.05, Inf)
+#' )
+#' categorize_ratio(0.03, thres, out = "label")
+#' categorize_ratio(0.08, thres, out = "bin")
 #'
 #' @export
 categorize_ratio <- function(ratio, thresholds, out = c("label", "bin")) {

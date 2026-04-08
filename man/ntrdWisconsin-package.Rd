@@ -6,8 +6,25 @@
 \alias{ntrdWisconsin-package}
 \title{ntrdWisconsin: Neuropsychological Test Result Dashboards for ADRC Wisconsin}
 \description{
-Extension to `ntrd` for the Wisconsin ADRC to import neuropsychological data directly from REDCap and biomarker data from Panda.
+An \href{https://github.com/rmtrane/ntrd}{ntrd} extension that integrates with the Wisconsin
+Alzheimer's Disease Research Center (WADRC) data infrastructure. The package
+pulls neuropsych data from WADRC REDCap databases (UDS-2, UDS-3, UDS-4) and
+biomarker data from the Panda API, then presents results in interactive Shiny
+dashboards with density plots and threshold-based categorization.
 }
+\section{Key functions}{
+
+\itemize{
+\item Data loading: \code{\link[=pull_redcap_data]{pull_redcap_data()}}, \code{\link[=wadrc_source]{wadrc_source()}}
+\item Biomarker visualization: \code{\link[=bio_tab_to_html_table]{bio_tab_to_html_table()}}, \code{\link[=density_plot]{density_plot()}},
+\code{\link[=create_thresholds_table]{create_thresholds_table()}}
+\item Biomarker ratios: \code{\link[=lumipulse_pTau217_ABeta42_ratio]{lumipulse_pTau217_ABeta42_ratio()}},
+\code{\link[=lumipulse_ABeta42_ABeta40_ratio]{lumipulse_ABeta42_ABeta40_ratio()}}, \code{\link[=categorize_ratio]{categorize_ratio()}}
+\item Shiny modules: \code{\link[=extension_server]{extension_server()}}, \code{\link[=extension_app]{extension_app()}},
+\code{\link[=data_source_server]{data_source_server()}}, \code{\link[=data_source_ui]{data_source_ui()}}
+}
+}
+
 \author{
 \strong{Maintainer}: Ralph Møller Trane \email{rmtrane@gmail.com} (\href{https://orcid.org/0000-0001-7824-1785}{ORCID})
 

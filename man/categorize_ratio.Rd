@@ -17,5 +17,19 @@ categorize_ratio(ratio, thresholds, out = c("label", "bin"))
 A single value (a label or a bin identifier) from the \code{thresholds} object. Returns \code{NA} if \code{ratio} falls outside the defined thresholds.
 }
 \description{
-A short description...
+Assigns a category label or bin to a numeric ratio based on threshold ranges.
+}
+\examples{
+thres <- data.frame(
+  label = c("Negative", "Positive"),
+  bin = c(0, 1),
+  min = c(0, 0.05),
+  max = c(0.05, Inf)
+)
+categorize_ratio(0.03, thres, out = "label")
+categorize_ratio(0.08, thres, out = "bin")
+
+}
+\seealso{
+\code{\link[=lumipulse_pTau217_ABeta42_ratio]{lumipulse_pTau217_ABeta42_ratio()}}, \code{\link[=lumipulse_ABeta42_ABeta40_ratio]{lumipulse_ABeta42_ABeta40_ratio()}}
 }

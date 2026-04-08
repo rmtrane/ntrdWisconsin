@@ -15,3 +15,8 @@ A single integer representing the number of decimal places in \code{x}.
 \description{
 Get number of decimal places in a number.
 }
+\examples{
+count_decimal_places(3.14)
+count_decimal_places(0.00025)
+
+}

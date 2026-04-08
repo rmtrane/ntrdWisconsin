@@ -8,6 +8,10 @@
 #' @returns
 #' A single integer representing the number of decimal places in `x`.
 #'
+#' @examples
+#' count_decimal_places(3.14)
+#' count_decimal_places(0.00025)
+#'
 #' @export
 count_decimal_places <- function(x) {
   # Convert to character and remove scientific notation
@@ -32,6 +36,16 @@ count_decimal_places <- function(x) {
 #'
 #' @returns
 #' A `shiny::HTML` object representing an HTML table of the thresholds.
+#'
+#' @seealso [bio_tab_to_html_table()]
+#'
+#' @examples
+#' thres <- data.frame(
+#'   label = c("Negative", "Positive"),
+#'   min = c(0, 0.05),
+#'   max = c(0.05, Inf)
+#' )
+#' create_thresholds_table(thres)
 #'
 #' @export
 create_thresholds_table <- function(thres) {

@@ -30,5 +30,9 @@ density_plot(
 A \code{plotly} object. Returns \code{NULL} invisibly if \code{obs} is \code{NA}.
 }
 \description{
-A short description...
+Creates a \code{plotly} density plot for a biomarker, optionally highlighting the
+observed value and shading regions defined by cut-off thresholds.
+}
+\seealso{
+\code{\link[=bio_tab_to_html_table]{bio_tab_to_html_table()}}
 }

@@ -5,14 +5,16 @@
 \alias{wadrc_uds3_to_nacc}
 \title{Translate WADRC UDS-3 variable names to NACC variable names}
 \format{
-A named vector where names of entries correspond to WADRC variable
-names as they appear in the UDS-3 REDCap database, and entries contain NACC
-variable names.
+A named character vector where names are WADRC variable names from
+the UDS-3 REDCap database and values are the corresponding NACC variable names.
 }
 \usage{
 wadrc_uds3_to_nacc
 }
 \description{
 Translate WADRC UDS-3 variable names to NACC variable names
+}
+\seealso{
+\link{nacc_to_wadrc_uds3}, \code{\link[=wadrc_data_prep]{wadrc_data_prep()}}
 }
 \keyword{datasets}

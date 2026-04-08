@@ -28,5 +28,10 @@ A \code{shiny::tagList} object representing the HTML table. Will error if \code{
 a list of \code{data.table}s as expected.
 }
 \description{
-A short description...
+Converts a list of biomarker \code{data.table}s (as returned by \code{\link[=bio_tab_for_gt]{bio_tab_for_gt()}})
+into an interactive HTML table with inline density plots, threshold indicators,
+and tooltip info icons for use in a Shiny application.
+}
+\seealso{
+\code{\link[=density_plot]{density_plot()}}, \code{\link[=create_thresholds_table]{create_thresholds_table()}}
 }

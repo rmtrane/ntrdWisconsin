@@ -5,7 +5,8 @@ data_load <- S7::new_external_generic("ntrd", "data_load", "source")
 #' Load WADRC data
 #'
 #' @description
-#' A short description...
+#' Pulls UDS-2, UDS-3, and UDS-4 data from the WADRC REDCap databases,
+#' prepares each dataset, combines them, and computes derived neuropsych scores.
 #'
 #' @param source An object of class `wadrc_source`.
 #' @param uds2_api_token A single string.
@@ -17,6 +18,8 @@ data_load <- S7::new_external_generic("ntrd", "data_load", "source")
 #' An object of class `data_nacc` if data is successfully retrieved and combined.
 #' If no data is retrieved from any UDS, `NULL` is returned and an error notification is shown in a Shiny context.
 #' Notifications are displayed within a Shiny application to indicate data loading progress and completion.
+#'
+#' @seealso [pull_redcap_data()], [wadrc_source()]
 #'
 #' @name data_load
 #'
@@ -126,7 +129,8 @@ S7::method(data_load, wadrc_source) <- function(
 #' Pull REDCap data
 #'
 #' @description
-#' A short description...
+#' Pulls data from a WADRC REDCap database using the provided API token,
+#' then prepares it via [wadrc_data_prep()].
 #'
 #' @param token A single string, the REDCap API token.
 #' @param fields A character vector of field names to pull.
@@ -135,6 +139,8 @@ S7::method(data_load, wadrc_source) <- function(
 #' @returns
 #' A prepared data table from `wadrc_data_prep()`. If the data pull fails,
 #' it returns `NULL` and will show a notification in a Shiny app or emit a warning.
+#'
+#' @seealso [wadrc_source()], [wadrc_uds3_redcap_fields]
 #'
 #' @export
 pull_redcap_data <- function(token, fields, uds) {

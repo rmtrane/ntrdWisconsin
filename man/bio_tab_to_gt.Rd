@@ -14,6 +14,7 @@ A \code{gt::gt} table. If \code{tab_for_gt} is a list, the names of the list are
 grouping variable for table.
 }
 \description{
-A short description...
+Converts a formatted biomarker \code{data.table} (or list of \code{data.table}s) into
+a styled \code{\link[gt:gt]{gt::gt()}} table, using list names as row groups when applicable.
 }
 \keyword{internal}
