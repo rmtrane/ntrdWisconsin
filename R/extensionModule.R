@@ -45,8 +45,6 @@ extension_server <- function(
     "json/panda_template.json",
     package = "ntrdWisconsin"
   )
-  # densities,
-  # all_cuts
 ) {
   ###################
   ## BEFORE SERVER
@@ -116,7 +114,7 @@ extension_server <- function(
 
       # If the ExtendedTask is already running, stop it.
       if (biomarker_dat$status() == "running") {
-        shiny::showNotification(ui = "Restarting biomarker pull")
+        # shiny::showNotification(ui = "Restarting biomarker pull")
         mirai::stop_mirai(mm)
       }
 
@@ -182,62 +180,6 @@ extension_server <- function(
         cli::cli_inform("{biomarker_dat$status()}")
       }
     })
-
-    # Table for LP visits
-    # output$lp_visits_table <- #gt::render_gt(
-    #   shiny::renderUI(
-    #     {
-    #       if (is.null(all_densities) | is.null(all_cuts)) {
-    #         return(loading_gt)
-    #       }
-
-    #       if (ptid() %in% names(biomarker_dat_tables)) {
-    #         lapply(
-    #           biomarker_dat_tables[[ptid()]][c(
-    #             "HDX Plasma - pTau217",
-    #             "Local Roche CSF - Sarstedt freeze, cleaned",
-    #             "Local Roche CSF - Sarstedt freeze 2, cleaned",
-    #             "Local Roche CSF - Sarstedt freeze 3",
-    #             "NTK MultiObs - CSF analytes",
-    #             "NTK2 MultiObs - CSF, 20230311"
-    #           )],
-    #           \(x) bio_tab_for_gt(x, return = "both")
-    #         ) |>
-    #           bio_tab_to_html_table(
-    #             densities = all_densities,
-    #             cuts = all_cuts
-    #           )
-    #       } else if (biomarker_dat$status() == "running") {
-    #         loading_gt
-    #       } else {
-    #         cli::cli_inform("{biomarker_dat$status()}")
-    #       }
-    #     } #,
-    #     #align = "left"
-    #   )
-
-    # # Table for PET visits
-    # output$pet_visits_table <- # gt::render_gt(
-    #   shiny::renderUI(
-    #     {
-    #       if (ptid() %in% names(biomarker_dat_tables)) {
-    #         lapply(
-    #           biomarker_dat_tables[[ptid()]][c(
-    #             "MK6240_NFT_Rating",
-    #             "NAV4694 Visual Ratings",
-    #             "PIB Visual Rating 20180126"
-    #           )],
-    #           \(x) bio_tab_for_gt(x, return = "both")
-    #         ) |>
-    #           bio_tab_to_html_table()
-    #       } else if (biomarker_dat$status() == "running") {
-    #         loading_gt
-    #       } else {
-    #         cli::cli_inform("{biomarker_dat$status()}")
-    #       }
-    #     } #,
-    #     # align = "left"
-    #   )
   })
 }
 
@@ -258,7 +200,7 @@ extension_server <- function(
 #'
 #' @export
 extension_app <- function(
-  ptid,
+  ptid = c("adrc00006"),
   biomarker_api,
   all_values,
   base_query_file = system.file(
@@ -299,7 +241,7 @@ extension_app <- function(
   )
 
   server <- function(input, output, session) {
-    extension_server(
+    srv <- extension_server(
       "biomarker-module",
       ptid = shiny::reactive(input$current_studyid),
       extras = shiny::reactive(

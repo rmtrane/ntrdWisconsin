@@ -16,7 +16,7 @@ extension_server(
 )
 
 extension_app(
-  ptid,
+  ptid = c("adrc00006"),
   biomarker_api,
   all_values,
   base_query_file = system.file("json/panda_template.json", package = "ntrdWisconsin"),

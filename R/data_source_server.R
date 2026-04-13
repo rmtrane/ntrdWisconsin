@@ -86,15 +86,17 @@ S7::method(data_source_server, wadrc_source) <- function(source, id) {
     extras <- shiny::reactiveValues(
       all_values = NULL,
       panda_api_token = NULL,
-      extension_ui = \() extension_ui(id = "biomarker-tables"),
-      extension_server = \(ptid, extras) {
-        extension_server(id = "biomarker-tables", ptid, extras)
-      }
+      extension_ui = NULL,
+      extension_server = NULL
     )
 
     shiny::observe({
       if (panda_access) {
         extras$panda_api_token <- input$panda_api_token
+        extras$extension_ui <- \() extension_ui(id = "biomarker-tables")
+        extras$extension_server <- \(ptid, extras) {
+          extension_server(id = "biomarker-tables", ptid, extras)
+        }
       }
 
       if (
