@@ -68,11 +68,11 @@ extension_ui <- function(id = "wisconsin-extension", pa = TRUE) {
         ),
         biomarker_ui(shiny::NS(id, "Visual Ratings"))
       ))
-    },
-    list(bslib::nav_panel(
-      title = "Behavioral Checklist",
-      behavioral_ui(shiny::NS(id, "behavior"))
-    ))
+    } #,
+    # list(bslib::nav_panel(
+    #   title = "Behavioral Checklist",
+    #   behavioral_ui(shiny::NS(id, "behavior"))
+    # ))
   )
 }
 

@@ -169,7 +169,7 @@ biomarker_app <- function(
   }
 
   mirai::daemons(1)
-  shiny::onStop(\(x) mirai::daemons(0))
+  shiny::onStop(\() mirai::daemons(0))
 
   ui <- bslib::page_fluid(
     ntrd::shinyApp_header(),
