@@ -4,10 +4,10 @@
 \alias{get_all_densities}
 \title{Compute kernel density estimates for all biomarkers}
 \usage{
-get_all_densities(all_values)
+get_all_densities(x)
 }
 \arguments{
-\item{all_values}{A named list of \code{data.table}s as returned by \code{get_all_values()}.}
+\item{all_values}{A named list of \code{data.table}s as returned by \code{get_biomarker_data()}.}
 }
 \value{
 A named list of density objects, nested by table and biomarker name.

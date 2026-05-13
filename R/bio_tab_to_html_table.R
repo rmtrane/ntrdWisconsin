@@ -23,72 +23,91 @@ bio_tab_to_html_table <- function(
   densities,
   cuts,
   www_path = system.file("www", package = "ntrdWisconsin"),
-  print_x = FALSE
+  print_x = FALSE,
+  tab_id = "csf",
+  tab_header = "method"
 ) {
   ## To avoid notes in R CMD check
   method <- NULL
   name <- NULL
   name_i <- NULL
+  name_label <- NULL
   link <- NULL
   description <- NULL
   thresholds <- NULL
 
-  if (!is.list(tab_for_gt) | inherits(tab_for_gt, "data.table")) {
+  if (!is.list(tab_for_gt) & !inherits(tab_for_gt, "data.table")) {
     cli::cli_abort(
       "{.arg tab_for_gt} must be a list of {.cls data.table}'s named after the Panda table that was queried to get the data."
     )
   }
 
-  tab_for_gt <- tab_for_gt[!unlist(lapply(tab_for_gt, is.null))]
+  if (is.list(tab_for_gt) && !data.table::is.data.table(tab_for_gt)) {
+    tab_for_gt <- tab_for_gt[!unlist(lapply(tab_for_gt, is.null))]
 
-  tab_for_gt <- lapply(tab_for_gt, \(x) {
-    if (inherits(x, "try-error")) {
-      x <- data.table::data.table(
-        name = x[1]
+    tab_for_gt <- lapply(tab_for_gt, \(x) {
+      if (inherits(x, "try-error")) {
+        x <- data.table::data.table(
+          name = x[1]
+        )
+      }
+
+      if (inherits(x, "error-message")) {
+        x <- data.table::data.table(name = x)
+      }
+
+      x
+    })
+
+    ## If some entries are not data.table's, abort.
+    if (!all(sapply(tab_for_gt, data.table::is.data.table))) {
+      non_dts <- tab_for_gt[!sapply(tab_for_gt, data.table::is.data.table)]
+
+      cli::cli_abort(
+        "When {.arg tab_for_gt} is of class {.cls list}, all elements must be of class {.cls data.table}, but {.val {names(non_dts)}} {?is/are} of class {.cls {unlist(sapply(non_dts, class))}}"
       )
     }
 
-    if (inherits(x, "error-message")) {
-      x <- data.table::data.table(name = x)
-    }
+    ## Bind tables together with new column giving 'table' from names
+    tab_for_gt <- data.table::rbindlist(
+      purrr::imap(tab_for_gt, \(x, idx) {
+        ## First, add extra row that is simply name of table. This will allow us
+        ## to create row group names. But only do this if more than one table included.
 
-    x
-  })
+        # tmp <- data.table::rbindlist(
+        #   list(
+        #     data.table::data.table(name = idx),
+        #     x
+        #   ),
+        #   fill = TRUE
+        # )
+        tmp <- copy(x)
 
-  ## If some entries are not data.table's, abort.
-  if (!all(sapply(tab_for_gt, data.table::is.data.table))) {
-    non_dts <- tab_for_gt[!sapply(tab_for_gt, data.table::is.data.table)]
+        tmp[,
+          name_i := as.numeric(factor(
+            name,
+            levels = unique(c(idx, "Age", tmp$name))
+          ))
+        ]
 
-    cli::cli_abort(
-      "When {.arg tab_for_gt} is of class {.cls list}, all elements must be of class {.cls data.table}, but {.val {names(non_dts)}} {?is/are} of class {.cls {unlist(sapply(non_dts, class))}}"
+        tmp
+      }),
+      fill = TRUE,
+      idcol = "table"
     )
-  }
+  } else {
+    tab_for_gt <- data.table::copy(tab_for_gt)
 
-  ## Bind tables together with new column giving 'table' from names
-  tab_for_gt <- data.table::rbindlist(
-    purrr::imap(tab_for_gt, \(x, idx) {
-      ## First, add extra row that is simply name of table. This will allow us
-      ## to create row group names.
-      tmp <- data.table::rbindlist(
-        list(
-          data.table::data.table(name = idx),
-          x
-        ),
-        fill = TRUE
-      )
-
-      tmp[,
-        name_i := as.numeric(factor(
+    tab_for_gt[,
+      c("table", "name_i") := list(
+        "table",
+        as.numeric(factor(
           name,
-          levels = unique(c(idx, "Age", tmp$name))
+          levels = unique(c("Age", name))
         ))
-      ]
-
-      tmp
-    }),
-    fill = TRUE,
-    idcol = "table"
-  )
+      )
+    ]
+  }
 
   ## Get all visit dates
   visit_dates <- # setdiff(names(tab_for_gt), c("name", "table", "name_i"))
@@ -96,91 +115,42 @@ bio_tab_to_html_table <- function(
 
   ## Arrange columns by visits
   tab_for_gt <- tab_for_gt[,
-    c("table", "name", "name_i", sort(visit_dates)),
+    c(
+      "table",
+      "name",
+      "name_i",
+      "name_label",
+      sort(visit_dates)
+    ),
     with = F
   ]
 
   ## Create method column giving the visit type (Plasma, CSF, Visual) (old: LP or PET)
   tab_for_gt[,
     method := data.table::fcase(
-      table %in% c("HDX Plasma - pTau217", "Lumipulse Plasma - pTau217")                                                                                                                                                                                                      , "Plasma"         ,
-      table %in% c("Lumipulse CSF - ABeta", "Local Roche CSF - Sarstedt freeze 2, cleaned", "Local Roche CSF - Sarstedt freeze 3", "Local Roche CSF - Sarstedt freeze, cleaned", "NTK MultiObs - CSF analytes", "NTK2 MultiObs - CSF, 20230311", "Amprion - CSF a-Synuclein") , "CSF"            ,
-      table %in% c("MK6240_NFT_Rating", "NAV4694 Visual Ratings", "PIB Visual Rating 20180126")                                                                                                                                                                               , "Visual Ratings" ,
-      default = "Other"
+      table == "csf"            , "CSF"            ,
+      table == "plasma"         , "Plasma"         ,
+      table == "visual_ratings" , "Visual Ratings" ,
+      default = tab_header
     )
   ]
-
-  ## Create info column giving source and thresholds when known
-  info_col <- data.table::rbindlist(
-    purrr::map(biomarker_thresholds, \(x) {
-      thress <- purrr::map(x, "thresholds") |>
-        purrr::map(create_thresholds_table)
-      data.table::rbindlist(
-        purrr::map(x, "source"),
-        idcol = "name"
-      )[
-        data.table::data.table(name = names(thress), thresholds = thress),
-        on = "name"
-      ]
-    }),
-    idcol = "table"
-  )[,
-    list(
-      table,
-      name,
-      info = purrr::pmap(list(description, link, thresholds), \(x, y, z) {
-        list(
-          description = x,
-          link = y,
-          thres = z
-        )
-      })
-    )
-  ]
-
-  tab_for_gt <- merge(
-    tab_for_gt,
-    info_col,
-    by = c("table", "name"),
-    all.x = TRUE,
-    all.y = FALSE
-  )
 
   ## Get row of ages.
   age_rows <- tab_for_gt[
     tab_for_gt$name == "Age"
   ][,
-    c("table") := NULL
-  ][,
-    setNames(
-      nm = c("table", names(.SD)),
-      c(
-        "age",
-        ## Get all unique ages in each column...
-        lapply(.SD, \(x) {
-          if (is.list(x)) {
-            x <- unlist(
-              lapply(x, \(y) {
-                if (is.null(y)) {
-                  return(NA)
-                }
+    # setNames(
+    c("table", names(.SD)) := c(
+      "age",
+      ## Get all unique ages in each column...
+      lapply(.SD, \(x) {
+        out <- unique(unlist(x, recursive = TRUE, use.names = FALSE))
+        if (is.null(out)) {
+          return(NA)
+        }
 
-                if (is.list(y)) {
-                  y <- y[[1]]
-                }
-
-                as.numeric(y)
-              })
-            )
-          }
-
-          if (all(is.na(x))) {
-            return(NA_real_)
-          }
-
-          unlist(unique(na.omit(x)))
-        })
-      )
+        out
+      })
     ),
     ## ... by method
     by = method
@@ -190,12 +160,17 @@ bio_tab_to_html_table <- function(
   data.table::setcolorder(
     age_rows,
     c(
-      "method",
-      "table",
-      "name",
-      "info",
+      intersect(
+        c(
+          "method",
+          "table",
+          "name"
+        ),
+        names(age_rows)
+      ),
+      # "info",
       names(age_rows)[
-        !names(age_rows) %in% c("method", "table", "name", "info")
+        !names(age_rows) %in% c("method", "table", "name") #, "info")
       ]
     )
   )
@@ -207,9 +182,9 @@ bio_tab_to_html_table <- function(
       "table",
       "name",
       "name_i",
-      "info",
+      # "info",
       names(tab_for_gt)[
-        !names(tab_for_gt) %in% c("method", "table", "name", "name_i", "info")
+        !names(tab_for_gt) %in% c("method", "table", "name", "name_i") #, "info")
       ]
     )
   )
@@ -225,27 +200,31 @@ bio_tab_to_html_table <- function(
 
   ## Make method and table factors so we can get correct order
   tab_for_gt[,
-    c("method", "table") := list(
-      factor(method, levels = c("Plasma", "CSF", "Visual Ratings")),
-      factor(
-        table,
-        levels = c(
-          "age",
-          "HDX Plasma - pTau217",
-          "Lumipulse Plasma - pTau217",
-          "Lumipulse CSF - ABeta",
-          "Local Roche CSF - Sarstedt freeze 3",
-          "Amprion - CSF a-Synuclein",
-          "Local Roche CSF - Sarstedt freeze 2, cleaned",
-          "Local Roche CSF - Sarstedt freeze, cleaned",
-          "NTK MultiObs - CSF analytes",
-          "NTK2 MultiObs - CSF, 20230311",
-          "MK6240_NFT_Rating",
-          "NAV4694 Visual Ratings",
-          "PIB Visual Rating 20180126"
-        )
-      )
+    method := factor(
+      method,
+      levels = unique(c("Plasma", "CSF", "Visual Ratings", tab_header))
     )
+    # c("method", "table") := list(
+    #   factor(method, levels = c("Plasma", "CSF", "Visual Ratings")),
+    #   factor(
+    #     table,
+    #     levels = c(
+    #       "age",
+    #       "HDX Plasma - pTau217",
+    #       "Lumipulse Plasma - pTau217",
+    #       "Lumipulse CSF - ABeta",
+    #       "Local Roche CSF - Sarstedt freeze 3",
+    #       "Amprion - CSF a-Synuclein",
+    #       "Local Roche CSF - Sarstedt freeze 2, cleaned",
+    #       "Local Roche CSF - Sarstedt freeze, cleaned",
+    #       "NTK MultiObs - CSF analytes",
+    #       "NTK2 MultiObs - CSF, 20230311",
+    #       "MK6240_NFT_Rating",
+    #       "NAV4694 Visual Ratings",
+    #       "PIB Visual Rating 20180126"
+    #     )
+    #   )
+    # )
   ]
 
   data.table::setorder(
@@ -276,24 +255,35 @@ bio_tab_to_html_table <- function(
       lapply(seq_along(tab_for_gt), \(x) {
         x_name <- colnames(tab_for_gt)[x]
 
+        if (x_name == "name") {
+          return()
+        }
+
         shiny::tags$th(
           ifelse(
             x_name %in%
-              c("method", "table", "name", "info", "append") |
+              c("method", "table", "name_label", "info", "append") |
               length(true_visits) == 0,
             "",
             x_name
           ),
           class = if (
             !x_name %in%
-              c("method", "name", "table", "info", "append", true_visits) &
+              c(
+                "method",
+                "name_label",
+                "table",
+                "info",
+                "append",
+                true_visits
+              ) &
               length(true_visits) > 0
           ) {
             prev_visit <- colnames(tab_for_gt)[x - 1] %in%
-              c("method", "name", "table", "info", "append", true_visits)
+              c("method", "name_label", "table", "info", "append", true_visits)
 
             next_visit <- colnames(tab_for_gt)[x + 1] %in%
-              c("method", "name", "table", "info", "append", true_visits)
+              c("method", "name_label", "table", "info", "append", true_visits)
 
             if (!prev_visit & !next_visit) {
               "lowered-column center"
@@ -331,7 +321,12 @@ bio_tab_to_html_table <- function(
               print(x)
             }
 
+            # if (x == 2) {
+            #   browser()
+            # }
+
             nam <- tab_for_gt$name[x]
+            nam_lab <- tab_for_gt$name_label[x]
             tab <- tab_for_gt$table[x]
             met <- tab_for_gt$method[x]
 
@@ -343,11 +338,11 @@ bio_tab_to_html_table <- function(
               lapply(.SD, \(x) {
                 if (length(x) > 0 && is.na(unlist(x))) NULL else unlist(x)
               }),
-              .SDcols = colnames(tab_for_gt)[
-                grepl("20[0-9]{2}-[0-9]{2}-[0-9]{2}", colnames(tab_for_gt))
+              .SDcols = names(tab_for_gt)[
+                grepl("20[0-9]{2}-[0-9]{2}-[0-9]{2}", names(tab_for_gt))
               ]
             ] |>
-              colnames()
+              names()
 
             ## Is this the last row of part of table related to this method?
             last_row <- (x == nrow(tab_for_gt)) ||
@@ -356,17 +351,19 @@ bio_tab_to_html_table <- function(
             ## If method is "new" (i.e. different from previous), we want to
             ## add header. If not, `subtable_header` will be NULL and ignored
             subtable_header <- if (!duplicated(tab_for_gt$method)[x]) {
-              list(
-                shiny::tags$tr(
-                  class = "subtable-header",
-                  shiny::tags$td(
-                    colspan = ncol(tab_for_gt) - 1,
-                    ## Add extra padding-top to second header
-                    style = if (x > 1) "padding-top: 24px;",
-                    shiny::HTML(paste("&nbsp;&nbsp;", met))
-                  )
-                ),
-                table_header(true_visits)
+              c(
+                if (met != "") {
+                  list(shiny::tags$tr(
+                    class = "subtable-header",
+                    shiny::tags$td(
+                      colspan = ncol(tab_for_gt) - 1,
+                      ## Add extra padding-top to second header
+                      style = if (x > 1) "padding-top: 24px;",
+                      shiny::HTML(paste("&nbsp;&nbsp;", met))
+                    )
+                  ))
+                },
+                list(table_header(true_visits))
               )
             }
 
@@ -385,23 +382,32 @@ bio_tab_to_html_table <- function(
                 class = if (last_row) "last-row",
                 shiny::tags$td(),
                 shiny::tags$td(
-                  nam,
+                  shiny::HTML(text = nam_lab),
                   class = ifelse(
                     grepl("^Error", nam),
                     "error-message",
                     "no-values"
                   ),
-                  colspan = ncol(tab_for_gt) - 2
+                  colspan = ncol(tab_for_gt) - 3
                 ),
                 shiny::tags$td()
               )
             } else {
               obs <- tab_for_gt[x, ]
-              obs[, c("method", "table") := list("", "")]
+              obs[,
+                c("method", "table", "name", "name_label") := list(
+                  "",
+                  "",
+                  name_label,
+                  NULL
+                )
+              ]
+
+              # browser()
 
               ## Is this the first row in a group of rows?
               first_row_in_group <- (nam == "Age") ||
-                (tab != tab_for_gt$table[x - 2])
+                (x > 2 && tab != tab_for_gt$table[x - 2])
 
               ## Is this the last row in a group of rows?
               last_row_in_group <- (x == nrow(tab_for_gt)) ||
@@ -420,38 +426,41 @@ bio_tab_to_html_table <- function(
                 unname(purrr::imap(
                   obs,
                   \(y, idy) {
-                    # if (idy == "2023-05-03") {
+                    # if (x == 2 & idy == "2023-01-20") {
                     #   browser()
                     # }
 
-                    # if (idy == "name" & tab %in% names(biomarker_thresholds)) {
-                    #   if (y %in% names(biomarker_thresholds[[tab]])) {
-                    #     src <- biomarker_thresholds[[tab]][[y]]$source
-                    #     y <- shiny::tags$div(
-                    #       y,
-                    #       shiny::tags$span(
-                    #         class = "plot-icon",
-                    #         shiny::icon("info"),
-                    #         `data-tooltip` = shiny::HTML(src)
-                    #       )
-                    #     )
-                    #   }
-                    # }
+                    if (!is.null(tab) && tab %in% names(densities)) {
+                      cur_dens <- densities[[tab]][[paste(
+                        nam,
+                        "raw",
+                        sep = "_"
+                      )]]
+                    } else {
+                      cur_dens <- densities[[paste(nam, "raw", sep = "_")]]
+                    }
+
+                    if (!is.null(tab) && tab %in% names(cuts)) {
+                      cur_cut <- cuts[[tab]][name == nam]
+                      # [[paste(
+                      #   nam,
+                      #   "raw",
+                      #   sep = "_"
+                      # )]]
+                    } else {
+                      cur_cut <- cuts[name == nam] # [[paste(nam, "raw", sep = "_")]]
+                    }
+
+                    if (idy == "name") {
+                      y <- shiny::HTML(y)
+                    }
 
                     create_td(
                       y,
                       idy,
-                      cell_id = paste(x, idy, sep = "_"),
+                      cell_id = paste(tab_id, x, idy, sep = "_"),
                       is_age = nam == "Age",
                       class = NULL,
-                      # class = paste(
-                      #   c(
-                      #     # if (last_row) "last-row",
-                      #     if (first_row_in_group) "first-row-in-group",
-                      #     if (last_row_in_group) "last-row-in-group"
-                      #   ),
-                      #   collapse = " "
-                      # ),
                       true_visits,
                       prev_col = colnames(tab_for_gt)[
                         which(colnames(tab_for_gt) == idy) - 1
@@ -464,10 +473,10 @@ bio_tab_to_html_table <- function(
                         shiny::p(tab)
                       ),
                       # fmt: skip
-                      cur_dens = if (tab %in% names(densities)) densities[[tab]][[paste(nam, "raw", sep = "_")]],
-                      cur_cut = if (tab %in% names(cuts)) {
-                        cuts[[tab]][name == nam, ]
-                      }
+                      cur_dens =  cur_dens, # if (tab %in% names(densities)) densities[[tab]][[paste(nam, "raw", sep = "_")]],
+                      cur_cut = cur_cut # if (tab %in% names(cuts)) {
+                      #   cuts[[tab]][name == nam, ]
+                      # }
                     )
                   }
                 ))
@@ -524,6 +533,10 @@ create_td <- function(
   )]],
   cur_cut = all_cuts[[tab]][name == nam, ]
 ) {
+  # if (cell_id == "4_2009-12-02") {
+  #   browser()
+  # }
+
   # To avoid notes in R CMD check
   densities <- NULL
   all_cuts <- NULL
@@ -664,7 +677,7 @@ create_td <- function(
         collapse = " "
       ),
       cell_content(
-        cell = y[[1]],
+        cell = c(raw = y[[1]]$raw, y[[1]]$cat),
         cell_id = cell_id,
         plot_title,
         cur_dens,
@@ -701,7 +714,7 @@ cell_content <- function(
     class = "flex-cell-wrapper",
     shiny::tags$span(
       class = "flex-cell-left",
-      shiny::HTML(cell$icon)
+      if (!is.null(cell$icon)) shiny::HTML(cell$icon)
     ),
     shiny::tags$span(
       class = "flex-cell-center",
@@ -712,6 +725,10 @@ cell_content <- function(
       ))
     ),
     if (!is.null(cell$raw) && !is.na(cell$raw)) {
+      # if (cell_id == "3_2023-05-03") {
+      #   browser()
+      # }
+
       shiny::tags$span(
         class = "flex-cell-right plot-icon",
         shiny::icon("chart-line"),

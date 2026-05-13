@@ -6,31 +6,20 @@
 \alias{extension_app}
 \title{Biomarker UI}
 \usage{
-extension_ui(id = "biomarker-tables")
+extension_ui(id = "wisconsin-extension")
 
-extension_server(
-  id = "biomarker-table",
-  ptid,
-  extras,
-  base_query_file = system.file("json/panda_template.json", package = "ntrdWisconsin")
-)
+extension_server(id = "wisconsin-extension", ptid, extras)
 
-extension_app(
-  ptid = c("adrc00006"),
-  biomarker_api,
-  all_values,
-  base_query_file = system.file("json/panda_template.json", package = "ntrdWisconsin"),
-  testing = FALSE
-)
+extension_app(ptid = c("adrc00006"), biomarker_api, testing = FALSE)
 }
 \arguments{
 \item{id}{A string used to namespace the module.}
 
 \item{ptid}{ADRC ptid. A character vector with patient ID's that can be chosen.}
 
-\item{biomarker_api}{Panda API key.}
+\item{extras}{A list}
 
-\item{all_values}{A reactive value}
+\item{biomarker_api}{Panda API key.}
 }
 \value{
 A UI definition.

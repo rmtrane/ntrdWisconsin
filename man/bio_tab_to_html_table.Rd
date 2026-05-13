@@ -9,7 +9,9 @@ bio_tab_to_html_table(
   densities,
   cuts,
   www_path = system.file("www", package = "ntrdWisconsin"),
-  print_x = FALSE
+  print_x = FALSE,
+  tab_id = "csf",
+  tab_header = "method"
 )
 }
 \arguments{

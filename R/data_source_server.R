@@ -54,7 +54,10 @@ S7::method(data_source_server, wadrc_source) <- function(source, id) {
       if (!panda_access & !is.null(input$panda_api_token)) {
         session$sendCustomMessage(
           "toggleInput",
-          list(id = session$ns("panda_api_token"), disable = TRUE)
+          list(
+            id = session$ns("panda_api_token"),
+            disable = TRUE
+          )
         )
 
         shiny::updateTextInput(
@@ -84,7 +87,6 @@ S7::method(data_source_server, wadrc_source) <- function(source, id) {
     }
 
     extras <- shiny::reactiveValues(
-      all_values = NULL,
       panda_api_token = NULL,
       extension_ui = NULL,
       extension_server = NULL
@@ -93,65 +95,9 @@ S7::method(data_source_server, wadrc_source) <- function(source, id) {
     shiny::observe({
       if (panda_access) {
         extras$panda_api_token <- input$panda_api_token
-        extras$extension_ui <- \() extension_ui(id = "biomarker-tables")
-        extras$extension_server <- \(ptid, extras) {
-          extension_server(id = "biomarker-tables", ptid, extras)
-        }
       }
-
-      if (
-        !panda_access |
-          is.null(input$panda_api_token) ||
-          input$panda_api_token == ""
-      ) {
-        extras$extension_ui <- NULL
-        extras$extension_server <- NULL
-      }
-    })
-
-    all_values_et <- shiny::ExtendedTask$new(
-      \(api) {
-        mirai::mirai(
-          {
-            get_all_values(
-              api_key = api,
-              base_query_file = bq_file
-            )
-          },
-          .args = list(
-            get_all_values = get_all_values,
-            api = api,
-            bq_file = system.file(
-              "json/panda_template.json",
-              package = "ntrdWisconsin"
-            )
-          )
-        )
-      }
-    )
-
-    shiny::observe({
-      if (all_values_et$status() == "success") {
-        extras$all_values <- all_values_et$result()
-      }
-    }) |>
-      shiny::bindEvent(all_values_et$status())
-
-    # # Kick off fetch whenever panda token is available
-
-    shiny::observe({
-      shiny::req(input$panda_api_token)
-      shiny::req(nzchar(input$panda_api_token))
-
-      if (panda_access) {
-        all_values_et$invoke(api = input$panda_api_token)
-      }
-    })
-
-    shiny::observe({
-      if (all_values_et$status() == "success") {
-        extras$all_values <- all_values_et$result()
-      }
+      extras$extension_ui <- \(id) extension_ui(id, panda_access)
+      extras$extension_server <- extension_server
     })
 
     list(

@@ -1,0 +1,130 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "Enrollments",
+        "id": 1230,
+        "class": "cg_tn",
+        "join": "inner",
+        "columns": [
+          {
+            "name": "enumber",
+            "id": 45350,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "MK6240_NFT_Rating",
+        "id": 865,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "comment",
+            "id": 11284,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_1",
+            "id": 19153,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_2",
+            "id": 19154,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_3",
+            "id": 19155,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_4",
+            "id": 19156,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_5",
+            "id": 19157,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_6",
+            "id": 19158,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "NAV4694 Visual Ratings",
+        "id": 1235,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "rating_0_1_2_3",
+            "id": 45651,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "PIB Visual Rating 20180126",
+        "id": 845,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "rating_0_1_2_3",
+            "id": 10364,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "PET Appointments",
+        "id": 674,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "Petscan date",
+            "id": 719,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "Age at Appointment",
+            "id": 747,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ]
+  }
+}

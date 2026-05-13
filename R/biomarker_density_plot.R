@@ -55,7 +55,9 @@ density_plot <- function(
 
   cut_values <- unique(unlist(cuts[, list(min_obs, max_obs)]))
   cuts_not_in_df <- cut_values[
-    cut_values > 0 & is.finite(cut_values) & !cut_values %in% density_df$x
+    cut_values > 0 &
+      is.finite(cut_values) &
+      !cut_values %in% density_df$x
   ]
 
   if (length(cuts_not_in_df) > 0) {
@@ -75,7 +77,12 @@ density_plot <- function(
   trace_colors <- cuts$color
   cuts <- cuts[, list(cuts = unique(c(min_obs, max_obs)))]$cuts
 
-  obs_where <- findInterval(obs, vec = cuts)
+  obs_where <- #tryCatch(
+    findInterval(obs, vec = cuts) #,
+  #   error = function(e) {
+  #     browser()
+  #   }
+  # )
 
   trace_colors[obs_where] <- gsub("alpha", "0.9", trace_colors[obs_where])
   trace_colors <- unlist(lapply(trace_colors, \(x) gsub("alpha", "0.4", x)))

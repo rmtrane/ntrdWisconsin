@@ -44,6 +44,7 @@ Remotes:
 Config/ntrd/extension: true
 Collate: 
     'bio_tab_to_html_table.R'
+    'biomarkerModule.R'
     'biomarker_density_plot.R'
     'biomarker_ratios.R'
     'biomarker_thresholds.R'
@@ -60,6 +61,7 @@ Collate:
     'npsych_scores-CESDTOTAL.R'
     'ntrdWisconsin-package.R'
     'query_panda.R'
+    'respval_behavioral_data.R'
     'wadrc_data_prep.R'
     'wadrc_uds2_redcap_fields.R'
     'wadrc_uds2_to_nacc.R'
