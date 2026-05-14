@@ -117,7 +117,9 @@ wadrc_data_prep <- function(
                 nacc_to_wadrc_uds3[
                   -which(names(nacc_to_wadrc_uds3) %in% c("EDUC", "RACE"))
                 ], # Treat EDUC and RACE separately
-                for_diagnosis
+                for_diagnosis,
+                "respval",
+                "respothx"
               ),
               each = length(prefixes)
             ),
@@ -140,7 +142,7 @@ wadrc_data_prep <- function(
 
     ## Combine columns that all relate to same variables
     for (var in setdiff(
-      c(nacc_to_wadrc_uds3, for_diagnosis),
+      c(nacc_to_wadrc_uds3, for_diagnosis, "respval", "respothx"),
       c(
         "ptid",
         "redcap_event_name",
@@ -269,7 +271,13 @@ wadrc_data_prep <- function(
 
   ## For UDS3, this is exactly nacc_to_wadrc_uds3
   if (uds == "uds3") {
-    cols_wanted <- nacc_to_wadrc_uds3
+    cols_wanted <- c(
+      nacc_to_wadrc_uds3
+    )
+
+    names(cols_wanted)[names(cols_wanted) == ""] <- unname(cols_wanted[
+      names(cols_wanted) == ""
+    ])
   }
 
   ## For UDS4, need to add visityr, visitmo, visitday, and sex, while removing
@@ -282,11 +290,19 @@ wadrc_data_prep <- function(
       "SEX" = "sex",
       nacc_to_wadrc_uds4[!nacc_to_wadrc_uds4 %in% c("birthsex", "visitdate")]
     )
+
+    names(cols_wanted)[names(cols_wanted) == ""] <- unname(cols_wanted[
+      names(cols_wanted) == ""
+    ])
   }
 
-  out <- setNames(
-    out[, cols_wanted, with = F],
-    nm = names(cols_wanted)
+  out <- out[, cols_wanted, with = F]
+
+  data.table::setnames(
+    out,
+    old = unname(cols_wanted),
+    new = names(cols_wanted),
+    skip_absent = TRUE
   )
 
   out
@@ -389,9 +405,9 @@ fill_data_downup <- function(
   num_cols <- lapply(out, \(x) is.numeric(x) && sum(is.na(x) > 0))
 
   out[,
-    names(.SD) := lapply(
+    names(.SD) := purrr::imap(
       .SD,
-      \(x) {
+      \(x, idx) {
         # If x of length 1, simply return x (there is nothing to fill...)
         if (length(x) == 1) {
           return(x)
@@ -455,13 +471,24 @@ fill_data_downup <- function(
   out <- out[order(ptid, visityr, visitmo, visitday)]
 
   out[,
-    names(.SD) := lapply(.SD, \(x) {
+    names(.SD) := purrr::imap(.SD, \(x, idx) {
       if (length(x) == 1) {
         return(x)
       }
 
       if (all(is.na(x))) {
         return(x)
+      }
+
+      # If sex, try return_single after removing 8,9
+      if (idx %in% c("SEX", "sex")) {
+        tmp <- x
+        tmp[!tmp %in% c(1, 2)] <- NA
+        single <- return_single(tmp)
+
+        if (!is.na(single)) {
+          return(single)
+        }
       }
 
       data.table::nafill(x, type = "locf") |>

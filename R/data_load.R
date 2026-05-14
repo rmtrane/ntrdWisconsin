@@ -64,8 +64,7 @@ S7::method(data_load, wadrc_source) <- function(
     )
   }
 
-  combined <- data.table::rbindlist(prepped_list, fill = TRUE) |>
-    unique()
+  combined <- unique(data.table::rbindlist(prepped_list, fill = TRUE))
 
   combined <- fill_data_downup(
     out = combined,
@@ -83,6 +82,13 @@ S7::method(data_load, wadrc_source) <- function(
       "REDCap data ready!",
       type = "message"
     )
+  }
+
+  ## Drop due to missing SEX
+  n_dropped <- sum(is.na(combined$SEX))
+
+  if (n_dropped > 0) {
+    cli::cli_warn("Dropping {n_dropped} row{?s} with missing SEX.")
   }
 
   ## Remove rows with no sex
@@ -160,7 +166,7 @@ pull_redcap_data <- function(token, fields, uds) {
     guess_max = Inf
   )
 
-  if (!res$success && nrow(res$data) > 10) {
+  if (!res$success) {
     if (!is.null(shiny::getDefaultReactiveDomain())) {
       shiny::removeNotification(id = "pulling_from_redcap")
       shiny::showNotification(
@@ -169,6 +175,19 @@ pull_redcap_data <- function(token, fields, uds) {
       )
     } else {
       cli::cli_warn("Failed to pull UDS-{uds} data from REDCap")
+    }
+    return(NULL)
+  }
+
+  if (nrow(res$data) == 0) {
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+      shiny::removeNotification(id = "pulling_from_redcap")
+      shiny::showNotification(
+        paste0("No data retrieved from REDCap UDS-", uds, " database"),
+        duration = NULL
+      )
+    } else {
+      cli::cli_warn("No data retrieved from REDCap UDS-{uds} database")
     }
     return(NULL)
   }
