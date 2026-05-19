@@ -223,12 +223,12 @@ extension_app <- function(
 
   ntrd::shinyAddResources()
 
-  if (mirai::daemons_set()) {
-    mirai::daemons(0)
-  }
+  # if (mirai::daemons_set()) {
+  #   mirai::daemons(0)
+  # }
 
-  mirai::daemons(1)
-  shiny::onStop(\(x) mirai::daemons(0))
+  # mirai::daemons(1)
+  # shiny::onStop(\(x) mirai::daemons(0))
 
   ui <- bslib::page_fluid(
     ntrd::shinyApp_header(),

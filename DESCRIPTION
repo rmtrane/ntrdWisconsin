@@ -17,31 +17,32 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports: 
-    S7,
+    bslib,
+    cli,
+    data.table,
+    gt,
+    httr2,
+    jsonlite,
+    lubridate,
+    methods,
+    mirai,
     ntrd,
     ntrs,
-    data.table,
-    httr2,
-    mirai,
-    jsonlite,
-    methods,
-    REDCapR,
-    bslib,
-    gt,
-    lubridate,
+    ntrsTscores,
     plotly,
     purrr,
+    REDCapR,
+    remotes,
     rlang,
-    shiny,
-    cli,
-    ntrsTscores
+    S7,
+    shiny
 Depends: 
     R (>= 4.1.0)
 Remotes:
     rmtrane/ntrs,
     rmtrane/ntrsTscores,
     rmtrane/ntrd
-Config/ntrd/extension: true
+Config/ntrd/extension: true'
 Collate: 
     'bio_tab_to_html_table.R'
     'biomarker_density_plot.R'
@@ -60,6 +61,7 @@ Collate:
     'npsych_scores-CESDTOTAL.R'
     'ntrdWisconsin-package.R'
     'query_panda.R'
+    'updates.R'
     'wadrc_data_prep.R'
     'wadrc_uds2_redcap_fields.R'
     'wadrc_uds2_to_nacc.R'

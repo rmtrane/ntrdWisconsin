@@ -109,6 +109,11 @@ S7::method(data_source_server, wadrc_source) <- function(source, id) {
       }
     })
 
+    if (!mirai::daemons_set()) {
+      mirai::daemons(1)
+    }
+    shiny::onStop(\() mirai::daemons(0))
+
     all_values_et <- shiny::ExtendedTask$new(
       \(api) {
         mirai::mirai(
