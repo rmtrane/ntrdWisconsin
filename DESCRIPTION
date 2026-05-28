@@ -42,7 +42,7 @@ Remotes:
     rmtrane/ntrs,
     rmtrane/ntrsTscores,
     rmtrane/ntrd
-Config/ntrd/extension: true'
+Config/ntrd/extension: true
 Collate: 
     'bio_tab_to_html_table.R'
     'biomarker_density_plot.R'
