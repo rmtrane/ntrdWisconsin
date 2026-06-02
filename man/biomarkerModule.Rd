@@ -6,11 +6,11 @@
 \alias{extension_app}
 \title{Biomarker UI}
 \usage{
-extension_ui(id = "wisconsin-extension")
+extension_ui(id = "wisconsin-extension", pa = TRUE)
 
-extension_server(id = "wisconsin-extension", ptid, extras)
+extension_server(id = "wisconsin-extension", ptid, dat, extras)
 
-extension_app(ptid = c("adrc00006"), biomarker_api, testing = FALSE)
+extension_app(ptid = c("adrc00006"), dat, biomarker_api, testing = FALSE)
 }
 \arguments{
 \item{id}{A string used to namespace the module.}

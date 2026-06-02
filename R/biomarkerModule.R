@@ -162,7 +162,7 @@ biomarker_app <- function(
     )
   }
 
-  ntrd::shinyAddResources()
+  # ntrd::shinyAddResources()
 
   if (mirai::daemons_set()) {
     mirai::daemons(0)

@@ -43,6 +43,8 @@ Remotes:
     rmtrane/ntrd
 Config/ntrd/extension: true
 Collate: 
+    'behavioralModule.R'
+    'behavioral_table.R'
     'bio_tab_to_html_table.R'
     'biomarkerModule.R'
     'biomarker_density_plot.R'
