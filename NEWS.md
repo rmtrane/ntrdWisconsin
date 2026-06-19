@@ -1,3 +1,9 @@
+# ntrdWisconsin 0.0.2
+
+Bug fixes:
+
+* Biomarker table now more robust towards weird data structures when no data is available. 
+
 # ntrdWisconsin 0.0.1
 
 Initial release of `ntrdWisconsin`, an
