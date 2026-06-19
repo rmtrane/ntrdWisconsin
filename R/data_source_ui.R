@@ -1,5 +1,4 @@
 #' @include wadrc_source.R
-
 data_source_ui <- S7::new_external_generic(
   "ntrd",
   "data_source_ui",
@@ -20,6 +19,7 @@ data_source_ui <- S7::new_external_generic(
 S7::method(data_source_ui, wadrc_source) <- function(source, ns) {
   shiny::tagList(
     shiny::tags$script(HTML(
+      # Some JS to disable inputs. Used for the Panda API token input when server cannot be reached.
       "Shiny.addCustomMessageHandler('toggleInput', function(msg) {
         var el = document.getElementById(msg.id);
         if (msg.disable) {

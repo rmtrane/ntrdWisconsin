@@ -161,7 +161,7 @@ bio_tab_to_html_table <- function(
           if (is.list(x)) {
             x <- unlist(
               lapply(x, \(y) {
-                if (is.null(y)) {
+                if (is.null(y) | length(y) == 0) {
                   return(NA)
                 }
 
