@@ -96,7 +96,9 @@ S7::method(data_source_server, wadrc_source) <- function(source, id) {
       if (panda_access) {
         extras$panda_api_token <- input$panda_api_token
       }
-      extras$extension_ui <- \(id) extension_ui(id, panda_access)
+      extras$extension_ui <- \(...) {
+        extension_ui(id = "wisconsin-extension", pa = panda_access)
+      }
       extras$extension_server <- extension_server
     })
 

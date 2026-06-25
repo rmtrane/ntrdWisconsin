@@ -23,6 +23,37 @@
 #'   [wrap_sticky_rowgroup()], [table_css()], [tooltip_script()]
 behavioral_table <- function(for_tab, table_id = "status-tracker") {
   date_cols_match <- "20[0-9]{2}-[0-9]{2}-[0-9]{2}"
+
+  with_valid_responses <- for_tab[
+    !label %in% c("Response Validity", "Checklist Complete"),
+    lapply(
+      .SD,
+      \(x) {
+        if (is.list(x)) {
+          sum(!is.na(unlist(lapply(x, `[[`, "value"))))
+        }
+      }
+    ),
+    .SDcols = data.table::patterns(date_cols_match)
+  ][,
+    lapply(.SD, \(x) if (x > 0) x)
+  ]
+
+  if (ncol(with_valid_responses) == 0) {
+    no_val_dt <- data.table::data.table(
+      label = "No values found"
+    )
+    return(
+      gt::gt(no_val_dt) |>
+        gt::cols_label(label ~ "")
+    )
+  } else {
+    for_tab <- for_tab[,
+      .SD,
+      .SDcols = c("label", "sublabel", names(with_valid_responses))
+    ]
+  }
+
   tbl <- gt::gt(for_tab, groupname_col = "label", id = table_id) |>
     # Structure
     gt::cols_label(sublabel ~ "") |>

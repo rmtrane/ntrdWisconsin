@@ -177,9 +177,9 @@ wadrc_data_prep <- function(
       !grepl(pattern = "uds3", x = out$redcap_event_name)
     ]
     # Create visityr, visitmo, visitday
-    out$visityr = lubridate::year(out$visitdate)
-    out$visitmo = lubridate::month(out$visitdate)
-    out$visitday = lubridate::day(out$visitdate)
+    out$visityr <- lubridate::year(out$visitdate)
+    out$visitmo <- lubridate::month(out$visitdate)
+    out$visitday <- lubridate::day(out$visitdate)
 
     # Rename 'birthsex' to 'sex'
     colnames(out)[colnames(out) == "birthsex"] <- "sex"
@@ -295,6 +295,7 @@ wadrc_data_prep <- function(
       "SEX" = "sex",
       nacc_to_wadrc_uds4[!nacc_to_wadrc_uds4 %in% c("birthsex", "visitdate")],
       unlist(data.table::patterns(
+        "wadrc_c2_behavioral_observations_checklist_complete",
         "wadrc_c2_boc_",
         "respval",
         "loc_res",
@@ -448,7 +449,7 @@ fill_data_downup <- function(
   if (length(char_cols) > 0) {
     out[, (char_cols) := lapply(.SD, factor), .SDcols = char_cols]
     ## Next, get levels of factors (for later refill)
-    lev = lapply(char_cols, function(x) levels(out[[x]])) |>
+    lev <- lapply(char_cols, function(x) levels(out[[x]])) |>
       setNames(char_cols)
     ## Now, make integer...
     out[, (char_cols) := lapply(.SD, as.integer), .SDcols = char_cols]

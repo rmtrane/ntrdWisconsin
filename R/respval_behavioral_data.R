@@ -34,7 +34,7 @@
 #'       observation categories. Column names must follow the pattern
 #'       `wadrc_c2_boc_<variable>` or `wadrc_c2_boc_<variable>___<subvar>`.}
 #'     \item{`respval`}{Integer code for overall response validity (1–3).}
-#'     \item{`loc_res___1` … `loc_res___8`}{REDCap checkbox columns indicating
+#'     \item{`loc_res___1`, ..., `loc_res___8`}{REDCap checkbox columns indicating
 #'       reasons for reduced response validity.}
 #'     \item{`respothx`}{Free-text field for "Other" response validity reason
 #'       (`loc_res___8`).}
@@ -81,7 +81,7 @@ respval_behavioral_data <- function(dat) {
     measure.vars = data.table::measure(
       variable,
       pattern = "wadrc_c2_boc_(.*)"
-    )
+    ),
   )[
     order(NACCID, VISITDATE),
     c("variable", "subvar") := data.table::tstrsplit(
@@ -89,6 +89,8 @@ respval_behavioral_data <- function(dat) {
       "___",
       fixed = TRUE
     )
+  ][
+    !is.na(value) & value > 0
   ][,
     c("variable", "subvar") := list(
       factor(
@@ -107,8 +109,8 @@ respval_behavioral_data <- function(dat) {
       data.table::nafill(as.numeric(subvar), "const", 99)
     )
   ][,
-    c("label", "sublabel") := list(
-      data.table::fcase(
+    let(
+      label = data.table::fcase(
         variable == "mood"       , "Mood"                    ,
         variable == "affect"     , "Affect"                  ,
         variable == "attitude"   , "Attitude Toward Testing" ,
@@ -121,7 +123,7 @@ respval_behavioral_data <- function(dat) {
       ) |>
         forcats::fct() |>
         forcats::fct_reorder(as.numeric(variable)),
-      data.table::fcase(
+      sublabel = data.table::fcase(
         variable == "mood" & subvar == 1       , "Happy/positive"                                                                                                             ,
         variable == "mood" & subvar == 2       , "Irritable/angry"                                                                                                            ,
         variable == "mood" & subvar == 3       , "Sad/Tearful"                                                                                                                ,
@@ -179,6 +181,9 @@ respval_behavioral_data <- function(dat) {
       ),
       data.table::fcase(
         variable %in% c("battery", "notes") & is.na(value) , NA_character_       ,
+        variable == "checklist_complete" & value == 0      , "incomplete"        ,
+        variable == "checklist_complete" & value == 1      , "unverified"        ,
+        variable == "checklist_complete" & value == 2      , "complete"          ,
         variable == "battery" & value == 1                 , "checked"           ,
         variable == "battery" & value == 2                 , "unchecked"         ,
         variable == "notes"                                , as.character(value) ,
@@ -226,7 +231,9 @@ respval_behavioral_data <- function(dat) {
       "loc_res",
       cols = names(dat)
     ))
-  )[,
+  )[
+    !is.na(value) & value > 0
+  ][,
     `:=`(
       label = data.table::fcase(
         variable == "respval"       , "Response Validity"                                   ,
@@ -281,13 +288,13 @@ respval_behavioral_data <- function(dat) {
         sublabel,
         rev(loc_res_vals),
         after = Inf
-      ),
-      value = purrr::map2(value, extra_info_2, \(x, y) {
-        list(
-          value = x,
-          extra_info = y
-        )[c(T, !is.na(y))]
-      })
+      ) #,
+      # value = purrr::map2(value, extra_info_2, \(x, y) {
+      #   list(
+      #     value = x,
+      #     extra_info = y
+      #   )[c(T, !is.na(y))]
+      # })
     )
   ][,
     extra_info_2 := NULL

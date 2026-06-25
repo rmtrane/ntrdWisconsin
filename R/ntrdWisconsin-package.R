@@ -20,6 +20,7 @@
 
 ## usethis namespace: start
 #' @importFrom data.table :=
+#' @importFrom data.table let
 #' @importFrom data.table .SD
 #' @importFrom methods formalArgs
 #' @importFrom methods missingArg
