@@ -1,10 +1,10 @@
-# ntrdWisconsin 0.0.2
+# ntrdWisconsin 0.1.1
 
 Bug fixes:
 
 * Biomarker table now more robust towards weird data structures when no data is available. 
 
-# ntrdWisconsin 0.0.1
+# ntrdWisconsin 0.1.0
 
 Initial release of `ntrdWisconsin`, an
 [`ntrd`](https://github.com/rmtrane/ntrd) extension that integrates the
