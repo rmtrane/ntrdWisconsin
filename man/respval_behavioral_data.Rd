@@ -16,7 +16,7 @@ minimum the following columns:
 observation categories. Column names must follow the pattern
 \verb{wadrc_c2_boc_<variable>} or \verb{wadrc_c2_boc_<variable>___<subvar>}.}
 \item{\code{respval}}{Integer code for overall response validity (1–3).}
-\item{\code{loc_res___1} … \code{loc_res___8}}{REDCap checkbox columns indicating
+\item{\code{loc_res___1}, ..., \code{loc_res___8}}{REDCap checkbox columns indicating
 reasons for reduced response validity.}
 \item{\code{respothx}}{Free-text field for "Other" response validity reason
 (\code{loc_res___8}).}

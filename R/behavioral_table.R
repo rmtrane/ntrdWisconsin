@@ -21,56 +21,108 @@
 #'
 #' @seealso [format_date_cell()], [format_sublabel_cell()],
 #'   [wrap_sticky_rowgroup()], [table_css()], [tooltip_script()]
-behavioral_table <- function(for_tab, table_id = "status-tracker") {
+behavioral_table <- function(
+  for_tab,
+  table_id = "status-tracker"
+) {
+  label <- sublabel <- variable <- NULL
+
+  no_val_dt <- data.table::data.table(
+    label = "No values found"
+  ) |>
+    gt::gt() |>
+    gt::cols_label(label ~ "") |>
+    gt::tab_style(
+      style = gt::cell_borders(sides = "all", style = "hidden"),
+      locations = list(
+        gt::cells_column_labels(columns = gt::everything()),
+        gt::cells_body(columns = gt::everything())
+      )
+    )
+
+  if (nrow(for_tab) == 0 | ncol(for_tab) == 0) {
+    return(no_val_dt)
+  }
+
   date_cols_match <- "20[0-9]{2}-[0-9]{2}-[0-9]{2}"
 
   with_valid_responses <- for_tab[
-    !label %in% c("Response Validity", "Checklist Complete"),
+    !label %in%
+      c(
+        "Response Validity",
+        "What makes this participant's responses less valid?"
+      ),
     lapply(
       .SD,
       \(x) {
-        if (is.list(x)) {
-          sum(!is.na(unlist(lapply(x, `[[`, "value"))))
-        }
+        # if (is.list(x)) {
+        sum(!is.na(x))
+        # }
       }
     ),
     .SDcols = data.table::patterns(date_cols_match)
-  ][,
+  ]
+
+  if (nrow(with_valid_responses) == 0) {
+    return(no_val_dt)
+  }
+
+  with_valid_responses <- with_valid_responses[,
     lapply(.SD, \(x) if (x > 0) x)
   ]
 
   if (ncol(with_valid_responses) == 0) {
-    no_val_dt <- data.table::data.table(
-      label = "No values found"
-    )
-    return(
-      gt::gt(no_val_dt) |>
-        gt::cols_label(label ~ "")
-    )
-  } else {
-    for_tab <- for_tab[,
-      .SD,
-      .SDcols = c("label", "sublabel", names(with_valid_responses))
-    ]
+    return(no_val_dt)
   }
 
-  tbl <- gt::gt(for_tab, groupname_col = "label", id = table_id) |>
-    # Structure
-    gt::cols_label(sublabel ~ "") |>
+  for_tab <- for_tab[,
+    .SD,
+    .SDcols = c("label", "variable", names(with_valid_responses))
+  ]
 
+  complete_tab <- data.table::data.table(
+    label = factor(c(
+      "Test Battery Completed",
+      "Additional Notes",
+      "Response Validity",
+      "Mood",
+      "Affect",
+      "Attitude Toward Testing",
+      "Language",
+      "Sensory Function",
+      "Comprehension"
+    )),
+    variable = c(
+      "battery",
+      "notes",
+      "respval",
+      "mood",
+      "affect",
+      "attitude",
+      "language",
+      "snsry_fncn",
+      "comprhnsn"
+    )
+  )
+
+  tbl <- gt::gt(
+    complete_tab[for_tab, on = c("label", "variable")][,
+      variable := NULL
+    ][order(label)],
+    # groupname_col = "label",
+    id = table_id
+  ) |>
+    # Structure
+    gt::cols_label(label ~ "") |>
     # Content transforms
     gt::fmt(
       columns = gt::matches(date_cols_match),
-      fn = \(x) purrr::map(x, format_date_cell)
+      fn = \(x) purrr::map(x, gt::html)
     ) |>
-    gt::fmt(
-      columns = sublabel,
-      fn = \(x) purrr::map(x, format_sublabel_cell)
-    ) |>
-    gt::text_transform(
-      locations = gt::cells_row_groups(),
-      fn = wrap_sticky_rowgroup
-    ) |>
+    # gt::fmt(
+    #   columns = sublabel,
+    #   fn = \(x) purrr::map(x, format_sublabel_cell)
+    # ) |>
 
     # Styling
     gt::tab_style(
@@ -80,25 +132,32 @@ behavioral_table <- function(for_tab, table_id = "status-tracker") {
       )
     ) |>
     gt::tab_style(
-      style = gt::cell_text(align = "center"),
-      locations = gt::cells_body(columns = gt::matches(date_cols_match))
+      style = gt::cell_borders(sides = "top", style = "double"),
+      locations = gt::cells_body(
+        columns = gt::everything(),
+        rows = label == "Mood"
+      )
     ) |>
     gt::tab_style(
       style = list(
-        gt::cell_text(align = "left", indent = gt::px(12)),
+        gt::cell_text(
+          align = "left" #,
+          # indent = gt::px(12)
+        ),
         gt::css(
           "max-width" = "clamp(100px, 30cqw, 500px)",
           "overflow" = "hidden",
           "white-space" = "nowrap",
-          "text-overflow" = "ellipsis"
+          "text-overflow" = "ellipsis",
+          "vertical-align" = "top"
         )
       ),
-      locations = gt::cells_body(columns = sublabel)
+      locations = gt::cells_body(columns = label)
     ) |>
-    gt::tab_style(
-      style = gt::cell_fill(),
-      locations = gt::cells_row_groups()
-    ) |>
+    # gt::tab_style(
+    #   style = gt::cell_borders(sides = "left", style = "hidden"),
+    #   locations = gt::cells_body(columns = gt::everything())
+    # ) |>
     gt::opt_css(css = table_css(table_id))
 
   # ---- Assemble page -----------------------------------------------------------
@@ -106,7 +165,8 @@ behavioral_table <- function(for_tab, table_id = "status-tracker") {
   shiny::tagList(
     shiny::tags$div(class = paste0(table_id, '-container'), tbl),
     shiny::tags$script(shiny::HTML(tooltip_script(table_id)))
-  )
+  ) |>
+    bslib::page()
 }
 
 # ---- Helpers -----------------------------------------------------------------
@@ -169,8 +229,8 @@ format_date_cell <- function(y) {
 
   rendered <- switch(
     val,
-    "checked" = as.character(bsicons::bs_icon("check-lg")),
-    "unchecked" = as.character(bsicons::bs_icon("x-circle", color = "#e0e0e0")),
+    "checked" = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" class=\"bi bi-check-lg \" style=\"height:1em;width:1em;fill:currentColor;vertical-align:-0.125em;\" aria-hidden=\"true\" role=\"img\" ><path d=\"M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z\"></path></svg>", #as.character(bsicons::bs_icon("check-lg")),
+    "unchecked" = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" class=\"bi bi-x-circle \" style=\"height:1em;width:1em;fill:currentColor;vertical-align:-0.125em;color:#e0e0e0;\" aria-hidden=\"true\" role=\"img\" ><path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z\"></path>\n<path d=\"M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z\"></path></svg>", #as.character(bsicons::bs_icon("x-circle", color = "#e0e0e0")),
     val
   )
 
@@ -355,7 +415,7 @@ tooltip_script <- function(table_id) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init);
     } else {
-      // Script ran after DOM was already parsed — start immediately.
+      // Script ran after DOM was already parsed - start immediately.
       init();
     }
   })();

@@ -24,6 +24,10 @@ bio_tab_to_html_table(
 \item{www_path}{Path to www/ folder that contains .css and .js files. Defaults to either inst/www or www subdir of NpsychAssessmentTool pacakge.}
 
 \item{print_x}{For debugging}
+
+\item{tab_id}{ID for the table, used to create unique cell IDs.}
+
+\item{tab_header}{Header label for the table.}
 }
 \value{
 A \code{shiny::tagList} object representing the HTML table. Will error if \code{tab_for_gt} is not

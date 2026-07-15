@@ -342,7 +342,7 @@ get_biomarker_data <- function(
   adrc_ptids = NULL
 ) {
   # To avoid notes in R CMD check
-  name <- NULL
+  name <- enumber <- NULL
 
   base_query <- readLines(base_query_file) |>
     jsonlite::fromJSON()
@@ -396,9 +396,14 @@ get_biomarker_data <- function(
 
   resp <- httr2::resp_body_json(resp)$data
 
+  if (resp == "[]") {
+    return(data.table::data.table(enumber = adrc_ptids))
+  }
+
   resp <- jsonlite::fromJSON(resp) |>
-    data.table::as.data.table() |>
-    _[grepl("^adrc", enumber, ignore.case = TRUE)]
+    data.table::as.data.table()
+
+  resp <- resp[grepl("^adrc", enumber, ignore.case = TRUE)]
 
   if (any(grepl("csf", base_query$query$tables$name, ignore.case = TRUE))) {
     table_nam <- "csf"
@@ -429,7 +434,7 @@ get_biomarker_data <- function(
 #' are used. Otherwise, thresholds are inferred from the data by finding
 #' boundaries between bin categories.
 #'
-#' @param all_values A named list of `data.table`s as returned by `get_all_values()`.
+#' @param all_values A named list of `data.table`s.
 #'
 #' @returns A named list of `data.table`s with columns `name`, `bin`, `color`,
 #'   `min_obs`, and `max_obs`.
@@ -541,7 +546,7 @@ get_all_cuts <- function(all_values) {
 #' Calculates Gaussian kernel density estimates for each raw biomarker column,
 #' using Sheather-Jones bandwidth selection.
 #'
-#' @param all_values A named list of `data.table`s as returned by `get_biomarker_data()`.
+#' @param x A named list of `data.table`s as returned by `get_biomarker_data()`.
 #'
 #' @returns A named list of density objects, nested by table and biomarker name.
 #'

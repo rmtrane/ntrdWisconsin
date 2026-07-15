@@ -184,9 +184,9 @@ extension_app <- function(
 
   ntrd::shinyAddResources()
 
-  if (mirai::daemons_set()) {
-    mirai::daemons(0)
-  }
+  # if (mirai::daemons_set()) {
+  #   mirai::daemons(0)
+  # }
 
   mirai::daemons(1)
   shiny::onStop(\() mirai::daemons(0))

@@ -10,6 +10,8 @@ biomarker_server <- function(
   all_values = NULL,
   api_token
 ) {
+  enumber <- NULL
+
   shiny::moduleServer(id, function(input, output, session) {
     if (is.null(batch_loading)) {
       batch_loading <- !grepl("visual_ratings", base_query_file)
@@ -17,6 +19,8 @@ biomarker_server <- function(
 
     bio_tables <- shiny::reactiveValues()
     mm <- NULL
+
+    func <- NULL
 
     bio_dat <- shiny::ExtendedTask$new(
       \(api, pt_id) {
@@ -78,11 +82,17 @@ biomarker_server <- function(
       if (bio_dat$status() == "success") {
         bio_dat_res <- bio_dat$result()
 
+        # if (id == "Visual Ratings") {
+        #   browser()
+        # }
+
+        pt <- tolower(ptid())
+
         for (pt in setdiff(
           tolower(unique(bio_dat_res$enumber)),
           names(bio_tables)
         )) {
-          bio_tables[[tolower(pt)]] <- bio_dat_res[enumber == pt]
+          bio_tables[[pt]] <- bio_dat_res[enumber == pt]
         }
 
         if (
@@ -90,10 +100,6 @@ biomarker_server <- function(
             batch_loading &&
             !grepl("visual_ratings", base_query_file)
         ) {
-          # if (id == "Plasma") {
-          #   browser()
-          # }
-
           all_densities(
             get_all_densities(bio_dat_res)
           )
@@ -125,12 +131,12 @@ biomarker_server <- function(
         return(loading_gt)
       }
 
+      # if (id == "Visual Ratings") {
+      #   browser()
+      # }
+
       # if batch_loading is TRUE, we always want to enter here since names of bio_tables will be all available ptid's. If not, only enter if ptid is in names of bio_tables list, since unavailable ptid's will still show up with NULL entry.
       if (tolower(ptid()) %in% names(bio_tables) || isTRUE(batch_loading)) {
-        # if (ptid() == "adrc00006" & id == "Plasma") {
-        #   browser()
-        # }
-
         tmp <- bio_tab_to_html_table(
           tab_for_gt = bio_tab_for_gt(bio_tables[[ptid()]]),
           densities = all_densities(),
@@ -205,7 +211,7 @@ biomarker_app <- function(
       base_query_file = "inst/json/plasma.json"
     )
     biomarker_server(
-      "Visual Ratings",
+      id = "Visual Ratings",
       ptid = shiny::reactive(input$current_studyid),
       batch_loading = FALSE,
       api_token = biomarker_api,

@@ -7,7 +7,7 @@
 get_all_densities(x)
 }
 \arguments{
-\item{all_values}{A named list of \code{data.table}s as returned by \code{get_biomarker_data()}.}
+\item{x}{A named list of \code{data.table}s as returned by \code{get_biomarker_data()}.}
 }
 \value{
 A named list of density objects, nested by table and biomarker name.

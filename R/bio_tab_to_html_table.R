@@ -10,6 +10,8 @@
 #' @param cuts A list or data structure containing cut-off values.
 #' @param www_path Path to www/ folder that contains .css and .js files. Defaults to either inst/www or www subdir of NpsychAssessmentTool pacakge.
 #' @param print_x For debugging
+#' @param tab_id ID for the table, used to create unique cell IDs.
+#' @param tab_header Header label for the table.
 #'
 #' @returns
 #' A `shiny::tagList` object representing the HTML table. Will error if `tab_for_gt` is not
@@ -81,7 +83,7 @@ bio_tab_to_html_table <- function(
         #   ),
         #   fill = TRUE
         # )
-        tmp <- copy(x)
+        tmp <- data.table::copy(x)
 
         tmp[,
           name_i := as.numeric(factor(

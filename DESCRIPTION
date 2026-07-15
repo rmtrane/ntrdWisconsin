@@ -1,6 +1,6 @@
 Package: ntrdWisconsin
 Title: Neuropsychological Test Result Dashboards for ADRC Wisconsin
-Version: 0.0.0.9000
+Version: 0.1.1
 Authors@R: 
     person(
         given = "Ralph", 
@@ -17,24 +17,26 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports: 
-    S7,
-    ntrd,
-    ntrs,
-    data.table,
-    httr2,
-    mirai,
-    jsonlite,
-    methods,
-    REDCapR,
     bslib,
+    cli,
+    data.table,
+    forcats,
     gt,
+    httr2,
+    jsonlite,
     lubridate,
+    methods,
+    mirai,
+    ntrd (>= 0.1.0),
+    ntrs,
+    ntrsTscores,
     plotly,
     purrr,
-    rlang,
-    shiny,
-    cli,
-    ntrsTscores
+    REDCapR,
+    remotes,
+    S7,
+    safer,
+    shiny
 Depends: 
     R (>= 4.1.0)
 Remotes:
@@ -63,7 +65,9 @@ Collate:
     'npsych_scores-CESDTOTAL.R'
     'ntrdWisconsin-package.R'
     'query_panda.R'
+    'readOldSavedFile.R'
     'respval_behavioral_data.R'
+    'updates.R'
     'wadrc_data_prep.R'
     'wadrc_uds2_redcap_fields.R'
     'wadrc_uds2_to_nacc.R'

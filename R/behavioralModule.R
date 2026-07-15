@@ -7,6 +7,8 @@ behavioral_server <- function(
   dat, # reactive
   ptid = shiny::reactive("adrc00006")
 ) {
+  NACCID <- label <- sublabel <- extra_info <- value <- variable <- VISITDATE <- NULL
+
   shiny::moduleServer(id, function(input, output, session) {
     respval_behavioral_dat <- shiny::reactiveVal()
     shiny::observe({
@@ -16,24 +18,41 @@ behavioral_server <- function(
 
     output$table <- shiny::renderUI({
       shiny::req(
-        respval_behavioral_dat(),
-        ptid() %in% respval_behavioral_dat()$NACCID
+        respval_behavioral_dat() #,
+        # ptid() %in% respval_behavioral_dat()$NACCID
       )
 
-      for_tab <- data.table::dcast(
-        respval_behavioral_dat()[
+      if (!ptid() %in% unique(respval_behavioral_dat()$NACCID)) {
+        for_tab <- data.table::data.table()
+      } else {
+        for_dcast <- respval_behavioral_dat()[
           NACCID == ptid()
-        ],
-        label + sublabel + extra_info ~ VISITDATE,
-        value.var = "value"
-      )[order(label, -sublabel)][,
-        c("sublabel", "extra_info") := list(
-          purrr::map2(as.character(sublabel), extra_info, \(x, y) {
+        ][,
+          value := purrr::map2(as.character(value), extra_info, \(x, y) {
             c(list(value = x), if (!is.na(y)) list(extra_info = y))
-          }),
-          NULL
-        )
-      ]
+          }) |>
+            purrr::map_chr(format_date_cell)
+        ][,
+          list(
+            value = ifelse(
+              variable %in% c("battery", "notes", "respval"),
+              value,
+              paste0(
+                '<ul style="margin-top: 8px; margin-bottom: 8px;">',
+                paste0("<li>", value, "</li>", collapse = ""),
+                '</ul>'
+              )
+            )
+          ),
+          by = list(NACCID, VISITDATE, label, variable)
+        ]
+
+        for_tab <- data.table::dcast(
+          for_dcast,
+          label + variable ~ VISITDATE,
+          value.var = "value"
+        )[order(label, -variable)]
+      }
 
       behavioral_table(for_tab, table_id = "behaviorTable")
     })

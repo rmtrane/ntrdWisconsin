@@ -58,9 +58,15 @@
 #'       element (character tooltip text).}
 #'   }
 #'
+#' @importFrom data.table `%notin%`
+#'
 #' @export
 respval_behavioral_data <- function(dat) {
+  NACCID <- VISITDATE <- variable <- subvar <- value <- label <- sublabel <- extra_info <- extra_info_2 <- respothx <- wadrc_c2_behavioral_observations_checklist_complete <- NULL
+
   dat <- data.table::copy(dat)
+
+  dat <- dat[!is.na(wadrc_c2_behavioral_observations_checklist_complete)]
 
   for_melt <- dat[,
     c(
@@ -92,12 +98,13 @@ respval_behavioral_data <- function(dat) {
   ][
     !is.na(value) & value > 0
   ][,
-    c("variable", "subvar") := list(
-      factor(
+    let(
+      variable = factor(
         variable,
         levels = c(
-          "notes",
+          # "checklist_complete",
           "battery",
+          "notes",
           "mood",
           "affect",
           "attitude",
@@ -106,7 +113,7 @@ respval_behavioral_data <- function(dat) {
           "comprhnsn"
         )
       ),
-      data.table::nafill(as.numeric(subvar), "const", 99)
+      subvar = data.table::nafill(as.numeric(subvar), "const", 99)
     )
   ][,
     let(
@@ -117,8 +124,8 @@ respval_behavioral_data <- function(dat) {
         variable == "language"   , "Language"                ,
         variable == "snsry_fncn" , "Sensory Function"        ,
         variable == "comprhnsn"  , "Comprehension"           ,
-        variable == "battery"    , ""                        ,
-        variable == "notes"      , ""                        ,
+        variable == "battery"    , "Test Battery Completed"  ,
+        variable == "notes"      , "Additional Notes"        ,
         default = NA_character_
       ) |>
         forcats::fct() |>
@@ -162,39 +169,31 @@ respval_behavioral_data <- function(dat) {
         forcats::fct_relevel("Additional Notes", after = 0L)
     )
   ][,
-    c(
-      "extra_info",
-      "sublabel",
-      "value",
-      "subvar",
-      "extra_info_2"
-    ) := list(
-      # extract_parentheses(sublabel),
-      ifelse(
-        grepl("\\(.*?\\)", sublabel),
-        gsub(".*\\((.*?)\\).*", "\\1", sublabel),
-        NA_character_
-      ),
-      factor(
-        gsub("\\s*\\(.*?\\)", "", as.character(sublabel)),
-        levels = gsub("\\s*\\(.*?\\)", "", levels(sublabel))
-      ),
-      data.table::fcase(
-        variable %in% c("battery", "notes") & is.na(value) , NA_character_       ,
-        variable == "checklist_complete" & value == 0      , "incomplete"        ,
-        variable == "checklist_complete" & value == 1      , "unverified"        ,
-        variable == "checklist_complete" & value == 2      , "complete"          ,
-        variable == "battery" & value == 1                 , "checked"           ,
-        variable == "battery" & value == 2                 , "unchecked"         ,
-        variable == "notes"                                , as.character(value) ,
-        value == 1                                         , "checked"           ,
-        value == 0                                         , "unchecked"
-      ),
-      NULL,
-      data.table::fcase(
+    let(
+      extra_info = data.table::fcase(
+        grepl("\\(.*?\\)", sublabel)       , gsub(".*\\((.*?)\\).*", "\\1", sublabel)                    ,
         variable == "battery" & value == 1 , "All tests were completed"                                  ,
         variable == "battery" & value == 2 , "Some tests were not completed or only partially completed" ,
         default = NA_character_
+      ),
+      sublabel = factor(
+        gsub("\\s*\\(.*?\\)", "", as.character(sublabel)),
+        levels = gsub("\\s*\\(.*?\\)", "", levels(sublabel))
+      ),
+      subvar = NULL
+    )
+  ][,
+    let(
+      value = data.table::fcase(
+        variable %in% c("battery", "notes") & is.na(value) , NA_character_          ,
+        variable == "checklist_complete" & value == 0      , "incomplete"           ,
+        variable == "checklist_complete" & value == 1      , "unverified"           ,
+        variable == "checklist_complete" & value == 2      , "complete"             ,
+        variable == "battery" & value == 1                 , "checked"              ,
+        variable == "battery" & value == 2                 , "unchecked"            ,
+        variable == "notes"                                , as.character(value)    ,
+        value == 1                                         , as.character(sublabel) , # "checked"           ,
+        value == 0                                         , "unchecked"
       )
     )
   ]
@@ -213,7 +212,11 @@ respval_behavioral_data <- function(dat) {
   respothx_lookup <- dat[, list(NACCID, VISITDATE, respothx)]
 
   respval <- data.table::melt(
-    dat[,
+    dat[
+      # Only include values for those with some behavioral data
+      unique(wadrc_behavioral_obs[, list(NACCID, VISITDATE)]),
+      on = c("NACCID", "VISITDATE")
+    ][,
       .SD,
       .SDcols = c(
         "NACCID",
@@ -234,7 +237,7 @@ respval_behavioral_data <- function(dat) {
   )[
     !is.na(value) & value > 0
   ][,
-    `:=`(
+    let(
       label = data.table::fcase(
         variable == "respval"       , "Response Validity"                                   ,
         grepl("^loc_res", variable) , "What makes this participant's responses less valid?"
@@ -250,30 +253,33 @@ respval_behavioral_data <- function(dat) {
         variable == "loc_res___7" , loc_res_vals[7]                                           ,
         variable == "loc_res___8" , loc_res_vals[8]
       ),
-      extra_info_2 = data.table::fcase(
-        variable == "loc_res___8" & value == 1 , respothx                                                              ,
-        variable == "respval" & value == 1     , "probably accurate indication of participant's cognitive abilities"   ,
-        variable == "respval" & value == 2     , "possibly inaccurate indication of participant's cognitive abilities" ,
-        variable == "respval" & value == 3     , "probably inaccurate indication of participant's cognitive abilities" ,
+      extra_info = data.table::fcase(
+        variable == "loc_res___8" & value == 1 , respothx ,
+        # variable == "respval" & value == 1     , "probably accurate indication of participant's cognitive abilities"   ,
+        # variable == "respval" & value == 2     , "possibly inaccurate indication of participant's cognitive abilities" ,
+        # variable == "respval" & value == 3     , "probably inaccurate indication of participant's cognitive abilities" ,
         default = NA_character_
-      ),
-      value = data.table::fcase(
-        variable == "respval" & value == 1 , "Very valid"         ,
-        variable == "respval" & value == 2 , "Questionably valid" ,
-        variable == "respval" & value == 3 , "Invalid"            ,
-        value == 0                         , "unchecked"          ,
-        value == 1                         , "checked"
       )
     )
   ][,
-    respothx := NULL
+    let(
+      value = data.table::fcase(
+        variable == "respval" & value == 1 , "Very valid"           ,
+        variable == "respval" & value == 2 , "Questionably valid"   ,
+        variable == "respval" & value == 3 , "Invalid"              ,
+        value == 0                         , "unchecked"            ,
+        value == 1                         , as.character(sublabel)
+      ),
+      variable = gsub("^loc_res___[1-9]$", "loc_res", variable),
+      respothx = NULL
+    )
   ]
 
   out <- data.table::rbindlist(
     list(wadrc_behavioral_obs, respval),
     fill = TRUE
   )[,
-    `:=`(
+    let(
       VISITDATE = factor(
         VISITDATE,
         levels = sort(unique(VISITDATE), decreasing = TRUE)
@@ -282,23 +288,15 @@ respval_behavioral_data <- function(dat) {
         label,
         "Response Validity",
         "What makes this participant's responses less valid?",
-        after = 1L
+        after = 2L
       ),
       sublabel = forcats::fct_relevel(
         sublabel,
-        rev(loc_res_vals),
+        intersect(rev(loc_res_vals), levels(sublabel)),
         after = Inf
-      ) #,
-      # value = purrr::map2(value, extra_info_2, \(x, y) {
-      #   list(
-      #     value = x,
-      #     extra_info = y
-      #   )[c(T, !is.na(y))]
-      # })
+      )
     )
-  ][,
-    extra_info_2 := NULL
   ]
 
-  out
+  out[]
 }
