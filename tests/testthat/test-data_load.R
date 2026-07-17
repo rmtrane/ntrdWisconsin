@@ -165,7 +165,7 @@ test_that("pull_redcap_data works for UDS-4", {
   skip_if(is.null(getOption("redcap_adrc_uds4")))
 
   uds4_pull <- pull_redcap_data(
-    getOption("redcap_adrc_uds4")$token,
+    token = getOption("redcap_adrc_uds4")$token,
     fields = wadrc_uds4_redcap_fields,
     uds = 4
   )[
