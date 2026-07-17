@@ -16,8 +16,9 @@ data_load <- S7::new_external_generic("ntrd", "data_load", "source")
 #'
 #' @returns
 #' An object of class `data_nacc` if data is successfully retrieved and combined.
-#' If no data is retrieved from any UDS, `NULL` is returned and an error notification is shown in a Shiny context.
-#' Notifications are displayed within a Shiny application to indicate data loading progress and completion.
+#' If no data is retrieved from any UDS, `NULL` is returned and an error
+#' notification is shown in a Shiny context. Notifications are displayed within a
+#' Shiny application to indicate data loading progress and completion.
 #'
 #' @seealso [pull_redcap_data()], [wadrc_source()]
 #'
@@ -31,38 +32,73 @@ S7::method(data_load, wadrc_source) <- function(
   uds4_api_token,
   ...
 ) {
-  prepped_list <- list(
-    pull_redcap_data(
-      token = uds2_api_token,
-      fields = wadrc_uds2_redcap_fields,
-      uds = 2
-    ),
-    pull_redcap_data(
-      token = uds3_api_token,
-      fields = wadrc_uds3_redcap_fields,
-      uds = 3
-    ),
-    pull_redcap_data(
-      token = uds4_api_token,
-      fields = wadrc_uds4_redcap_fields,
-      uds = 4
+  prepped_list <- Filter(
+    Negate(is.null),
+    list(
+      pull_redcap_data(
+        token = uds2_api_token,
+        fields = wadrc_uds2_redcap_fields,
+        uds = 2
+      ),
+      pull_redcap_data(
+        token = uds3_api_token,
+        fields = wadrc_uds3_redcap_fields,
+        uds = 3
+      ),
+      pull_redcap_data(
+        token = uds4_api_token,
+        fields = wadrc_uds4_redcap_fields,
+        uds = 4
+      )
     )
   )
 
-  prepped_list <- Filter(Negate(is.null), prepped_list)
+  in_shiny <- !is.null(shiny::getDefaultReactiveDomain())
 
   if (length(prepped_list) == 0) {
-    shiny::showNotification("No data retrieved.", type = "error")
+    if (in_shiny) {
+      shiny::showNotification("No data retrieved.", type = "error")
+    }
+
     return(NULL)
   }
 
-  if (!is.null(shiny::getDefaultReactiveDomain())) {
+  if (in_shiny) {
     shiny::showNotification(
       "Combining data sets",
       duration = NULL,
       id = "combining"
     )
   }
+
+  combined <- prepare_combined(prepped_list)
+
+  if (in_shiny) {
+    shiny::removeNotification(id = "combining")
+    shiny::showNotification("REDCap data ready!", type = "message")
+  }
+
+  ntrd::data_nacc(data = combined)
+}
+
+
+#' Combine and prepare prepped WADRC UDS pulls
+#'
+#' @description
+#' Combines the per-UDS prepared tables into a single NACC-format table: binds
+#' them, fills participant-level fields across visits, drops rows with missing
+#' `SEX`, tags neuropsych-score columns, and computes derived scores. Pure with
+#' respect to Shiny (no UI side effects), so it can be tested directly on
+#' simulated pulls without mocking the REDCap calls.
+#'
+#' @param prepped_list A non-empty list of prepared `data.table`s, each as
+#'   returned by [pull_redcap_data()].
+#'
+#' @returns A `data.table` ready to be wrapped by [ntrd::data_nacc()].
+#'
+#' @keywords internal
+prepare_combined <- function(prepped_list) {
+  SEX <- NULL # due to NSE note in R CMD check
 
   combined <- unique(data.table::rbindlist(prepped_list, fill = TRUE))
 
@@ -76,34 +112,20 @@ S7::method(data_load, wadrc_source) <- function(
     constant_across_visits = c("BIRTHYR", "BIRTHMO", "SEX", "RACE", "HANDED")
   )
 
-  if (!is.null(shiny::getDefaultReactiveDomain())) {
-    shiny::removeNotification(id = "combining")
-    shiny::showNotification(
-      "REDCap data ready!",
-      type = "message"
-    )
-  }
-
-  ## Drop due to missing SEX
+  ## Drop rows with missing SEX
   n_dropped <- sum(is.na(combined$SEX))
-
   if (n_dropped > 0) {
     cli::cli_warn("Dropping {n_dropped} row{?s} with missing SEX.")
   }
-
-  ## Remove rows with no sex
   combined <- combined[!is.na(SEX)]
 
   ## 'Tag' npsych_scores
   for (col in intersect(colnames(combined), ntrs::list_npsych_scores())) {
-    combined[[col]] <- ntrs::get_npsych_scores(col)(as.numeric(combined[[col]])) # match.fun(col)(as.numeric(combined[[col]]))
+    combined[[col]] <- ntrs::get_npsych_scores(col)(as.numeric(combined[[col]]))
   }
 
-  combined$REYAREC <- with(
-    combined,
-    ntrs::calc_REYAREC(REYTCOR, REYFPOS)
-  )
-
+  ## Derived scores
+  combined$REYAREC <- with(combined, ntrs::calc_REYAREC(REYTCOR, REYFPOS))
   combined$FAS <- with(
     combined,
     ntrs::calc_FAS(
@@ -128,7 +150,7 @@ S7::method(data_load, wadrc_source) <- function(
     ntrs::calc_REYTOTAL(REY1REC, REY2REC, REY3REC, REY4REC, REY5REC)
   )
 
-  ntrd::data_nacc(data = combined)
+  combined
 }
 
 

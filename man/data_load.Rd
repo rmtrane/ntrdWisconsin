@@ -16,8 +16,9 @@
 }
 \value{
 An object of class \code{data_nacc} if data is successfully retrieved and combined.
-If no data is retrieved from any UDS, \code{NULL} is returned and an error notification is shown in a Shiny context.
-Notifications are displayed within a Shiny application to indicate data loading progress and completion.
+If no data is retrieved from any UDS, \code{NULL} is returned and an error
+notification is shown in a Shiny context. Notifications are displayed within a
+Shiny application to indicate data loading progress and completion.
 }
 \description{
 Pulls UDS-2, UDS-3, and UDS-4 data from the WADRC REDCap databases,

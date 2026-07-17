@@ -67,6 +67,7 @@ Collate:
     'query_panda.R'
     'readOldSavedFile.R'
     'respval_behavioral_data.R'
+    'simulate_data_table.R'
     'updates.R'
     'wadrc_data_prep.R'
     'wadrc_uds2_redcap_fields.R'
@@ -77,3 +78,6 @@ Collate:
     'wadrc_uds4_to_nacc.R'
     'zzz.R'
 LazyData: true
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
