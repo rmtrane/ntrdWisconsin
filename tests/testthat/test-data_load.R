@@ -110,3 +110,76 @@ test_that("the NACC column contract is stable (review snapshot on first run)", {
   contract <- contract[order(contract$column), ]
   expect_snapshot(print(contract, row.names = FALSE))
 })
+
+# ---------------------------------------------------------------------------
+# pull_redcap_data: local only since API tokens are needed
+# ---------------------------------------------------------------------------
+
+test_that("pull_redcap_data works for UDS-2", {
+  skip_if(is.null(getOption("redcap_adrc_uds2")))
+
+  uds2_pull <- pull_redcap_data(
+    getOption("redcap_adrc_uds2")$token,
+    fields = wadrc_uds2_redcap_fields,
+    uds = 2
+  )[
+    as.Date(paste(VISITYR, VISITMO, VISITDAY, sep = "-")) <
+      as.Date("2026-07-17")
+  ]
+
+  scramble_uds2 <- simulate_data_table(
+    uds2_pull,
+    id_col = "NACCID",
+    constant_cols = c("SEX", "EDUC", "RACE", "HANDED", "BIRTHYR", "BIRTHMO"),
+    date_parts = c("VISITYR", "VISITMO", "VISITDAY"),
+    seed = 1
+  )
+
+  expect_snapshot(scramble_uds2)
+})
+
+test_that("pull_redcap_data works for UDS-3", {
+  skip_if(is.null(getOption("redcap_adrc_uds3")))
+
+  uds3_pull <- pull_redcap_data(
+    getOption("redcap_adrc_uds3")$token,
+    fields = wadrc_uds3_redcap_fields,
+    uds = 3
+  )[
+    as.Date(paste(VISITYR, VISITMO, VISITDAY, sep = "-")) <
+      as.Date("2026-07-17")
+  ]
+
+  scramble_uds3 <- simulate_data_table(
+    uds3_pull,
+    id_col = "NACCID",
+    constant_cols = c("SEX", "EDUC", "RACE", "HANDED", "BIRTHYR", "BIRTHMO"),
+    date_parts = c("VISITYR", "VISITMO", "VISITDAY"),
+    seed = 1
+  )
+
+  expect_snapshot(scramble_uds3)
+})
+
+test_that("pull_redcap_data works for UDS-4", {
+  skip_if(is.null(getOption("redcap_adrc_uds4")))
+
+  uds4_pull <- pull_redcap_data(
+    getOption("redcap_adrc_uds4")$token,
+    fields = wadrc_uds4_redcap_fields,
+    uds = 4
+  )[
+    as.Date(paste(VISITYR, VISITMO, VISITDAY, sep = "-")) <
+      as.Date("2026-07-17")
+  ]
+
+  scramble_uds4 <- simulate_data_table(
+    uds4_pull,
+    id_col = "NACCID",
+    constant_cols = c("SEX", "EDUC", "RACE", "HANDED", "BIRTHYR", "BIRTHMO"),
+    date_parts = c("VISITYR", "VISITMO", "VISITDAY"),
+    seed = 1
+  )
+
+  expect_snapshot(scramble_uds4)
+})
