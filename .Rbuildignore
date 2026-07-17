@@ -5,3 +5,4 @@ scratch/*
 ^LICENSE\.md$
 ^data-raw/*
 ^.*\.Rproj$
+docs
