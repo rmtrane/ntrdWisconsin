@@ -7,7 +7,7 @@
 get_all_cuts(all_values)
 }
 \arguments{
-\item{all_values}{A named list of \code{data.table}s as returned by \code{get_all_values()}.}
+\item{all_values}{A named list of \code{data.table}s.}
 }
 \value{
 A named list of \code{data.table}s with columns \code{name}, \code{bin}, \code{color},

@@ -1,0 +1,92 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "Enrollments",
+        "id": 1230,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "enumber",
+            "id": 45350,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "Plasma - Core 1 AD Status",
+        "id": 1367,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "age_at_appointment",
+            "id": 54946,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "date_plasma",
+            "id": 54949,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_plasma_lumi_ratio_fda",
+            "id": 54950,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_plasma_hdx_ptau_ashton",
+            "id": 54951,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_plasma_hdx_ptau_local",
+            "id": 54952,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_plasma_lumi_ptau_local",
+            "id": 54953,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "plasma_ratio_lumi_ptau_ab42",
+            "id": 54954,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "plasma_ptau217_hdx",
+            "id": 54955,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "plasma_ptau217_lumi",
+            "id": 54956,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ]
+  }
+}

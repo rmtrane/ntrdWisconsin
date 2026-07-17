@@ -2,27 +2,29 @@
 % Please edit documentation in R/query_panda.R
 \name{get_biomarker_data}
 \alias{get_biomarker_data}
-\title{Get biomarker data}
+\title{Fetch all biomarker values from Panda}
 \usage{
 get_biomarker_data(
-  adrc_ptid = "adrc00006",
-  api_key,
-  base_query_file = system.file("json/panda_template.json", package = "ntrdWisconsin")
+  api_key = getOption("panda_api_key"),
+  base_query_file = "inst/json/plasma.json",
+  adrc_ptids = NULL
 )
 }
 \arguments{
-\item{adrc_ptid}{A single string. ADRC participant id for which we want to pull biomarker data.}
+\item{api_key}{A single string. Panda API key.}
 
-\item{api_key}{A single string. API key for panda database.}
+\item{base_query_file}{Path to the JSON query template file.}
 
-\item{base_query_file}{A single string. Optional.}
+\item{adrc_ptids}{Vector of ID's of ADRC participants for which biomarker
+data should be pulled. If NULL (default), data for all participants are
+pulled.}
 }
 \value{
-A list of \code{data.table}s containing biomarker data, with names corresponding to the tables from
-Panda that was queried.
+A named list of \code{data.table}s, one per biomarker table.
 }
 \description{
-Queries the \href{https://panda.medicine.wisc.edu}{Panda} database to get biomarker data for
-ADRC participants.
+Queries the Panda API for all biomarker data across all tables (excluding
+Participants, Appointments, and Visual Rating tables). Used to compute
+population-level density estimates and threshold cut-offs.
 }
 \keyword{internal}

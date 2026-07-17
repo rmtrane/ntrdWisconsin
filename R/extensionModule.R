@@ -11,12 +11,68 @@
 #' @rdname biomarkerModule
 #'
 #' @keywords internal
-extension_ui <- function(id = "biomarker-tables") {
-  bslib::nav_panel(
-    title = "Biomarkers",
-    shiny::tagList(
-      shiny::uiOutput(shiny::NS(id, "biomarker_table"))
-    )
+extension_ui <- function(id = "wisconsin-extension", pa = TRUE) {
+  hr_el <- shiny::tags$hr(
+    style = "margin-left: 8px; margin-right: 8px; border-width: 2px;"
+  )
+
+  c(
+    if (pa) {
+      list(bslib::nav_panel(
+        title = "Biomarkers",
+        shiny::tags$script(shiny::HTML(
+          "
+      document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]'));
+        tooltipTriggerList.map(function (el) {
+          return new bootstrap.Tooltip(el);
+        });
+      });
+    "
+        )),
+        shiny::tags$div(
+          style = "display: flex; align-items: center; gap: 8px; margin-left: 12px; margin-top: 24px;",
+          shiny::tags$h3("CSF", style = "margin: 0px;"),
+          shiny::tags$a(
+            href = "https://panda.medicine.wisc.edu/system/datadictionary2s/1368/original/report_biofluid_status_2026-02.pdf",
+            target = "_blank",
+            shiny::span(
+              shiny::icon("external-link-alt"),
+              `data-bs-toggle` = "tooltip",
+              `data-placement` = "top",
+              title = "Opens documentation in a new tab"
+            )
+          )
+        ),
+        biomarker_ui(shiny::NS(id, "CSF")),
+        hr_el,
+        shiny::tags$div(
+          style = "display: flex; align-items: center; gap: 8px; margin-left: 12px;",
+          shiny::tags$h3("Plasma", style = "margin: 0px;"),
+          shiny::tags$a(
+            href = "https://panda.medicine.wisc.edu/system/datadictionary2s/1368/original/report_biofluid_status_2026-02.pdf",
+            target = "_blank",
+            shiny::span(
+              shiny::icon("external-link-alt"),
+              `data-bs-toggle` = "tooltip",
+              `data-placement` = "top",
+              title = "Opens documentation in a new tab"
+            )
+          )
+        ),
+        biomarker_ui(shiny::NS(id, "Plasma")),
+        hr_el,
+        shiny::tags$div(
+          style = "display: flex; align-items: center; gap: 8px; margin-left: 12px;",
+          shiny::tags$h3("Visual ratings", style = "margin: 0px;")
+        ),
+        biomarker_ui(shiny::NS(id, "Visual Ratings"))
+      ))
+    },
+    list(bslib::nav_panel(
+      title = "Behavioral Checklist",
+      behavioral_ui(shiny::NS(id, "behavior"))
+    ))
   )
 }
 
@@ -28,8 +84,7 @@ extension_ui <- function(id = "biomarker-tables") {
 #'
 #' @param id A string used to namespace the module.
 #' @param ptid A reactive value specifying the ADRC patient ID.
-#' @param biomarker_api A reactive value giving the Panda API token.
-#' @param all_values A reactive value
+#' @param extras A list
 #'
 #' @returns
 #' NULL.
@@ -38,13 +93,14 @@ extension_ui <- function(id = "biomarker-tables") {
 #'
 #' @export
 extension_server <- function(
-  id = "biomarker-table",
+  id = "wisconsin-extension",
   ptid,
-  extras,
-  base_query_file = system.file(
-    "json/panda_template.json",
-    package = "ntrdWisconsin"
-  )
+  dat,
+  extras #,
+  # base_query_file = system.file(
+  #   "json/panda_template.json",
+  #   package = "ntrdWisconsin"
+  # )
 ) {
   ###################
   ## BEFORE SERVER
@@ -55,131 +111,46 @@ extension_server <- function(
   ###################
   ## START SERVER
   shiny::moduleServer(id, function(input, output, session) {
-    # reactiveValues object to hold biomarker tables. This approach
-    # lets us retrieve previously generated tables without fetching
-    # the data from Panda again.
-    biomarker_dat_tables <- shiny::reactiveValues()
+    panda_api <- shiny::reactive(extras()$panda_api_token)
 
-    # Prepare to hold mirai object
-    mm <- NULL
-
-    # Create ExtendedTask that will evaluate get_biomarker_data
-    biomarker_dat <- shiny::ExtendedTask$new(
-      \(cur_id, api) {
-        mm <<- mirai::mirai(
-          {
-            get_biomarker_data(
-              adrc_ptid = cur_id,
-              api_key = api,
-              base_query_file = base_query_file #"inst/json/panda_template.json"
-            )
-          },
-          .args = list(
-            get_biomarker_data = get_biomarker_data,
-            cur_id = cur_id,
-            api = api,
-            base_query_file = base_query_file
-          )
-        )
-
-        mm
-      }
+    biomarker_server(
+      "CSF",
+      ptid = ptid,
+      batch_loading = TRUE,
+      api_token = panda_api,
+      base_query_file = system.file(
+        "json/csf.json",
+        package = "ntrdWisconsin"
+      )
     )
 
-    all_values <- shiny::reactiveVal()
-    all_densities <- shiny::reactiveVal()
-    all_cuts <- shiny::reactiveVal()
-
-    biomarker_api <- shiny::reactiveVal()
-
-    shiny::observe({
-      shiny::req(extras()$all_values)
-
-      all_values(extras()$all_values)
-
-      biomarker_api(extras()$panda_api_token)
-    })
-
-    shiny::observe({
-      shiny::req(all_values())
-      all_densities(get_all_densities(all_values()))
-      all_cuts(get_all_cuts(all_values()))
-    })
-
-    shiny::exportTestValues(biomarker_dat = biomarker_dat)
-
-    # When ptid or biomarker_api is updated, invoke the ExtendedTask
-    shiny::observe({
-      shiny::req(biomarker_api(), ptid())
-
-      # If the ExtendedTask is already running, stop it.
-      if (biomarker_dat$status() == "running") {
-        # shiny::showNotification(ui = "Restarting biomarker pull")
-        mirai::stop_mirai(mm)
-      }
-
-      if (ptid() != "" && !ptid() %in% names(biomarker_dat_tables)) {
-        # Invoke, i.e. evaluate the ExtendedTask
-        biomarker_dat$invoke(
-          cur_id = ptid(),
-          api = biomarker_api()
-        )
-      }
-    }) |>
-      shiny::bindEvent(
-        ptid(),
-        biomarker_api()
+    biomarker_server(
+      "Plasma",
+      ptid = ptid, # shiny::reactive(input$current_studyid),
+      batch_loading = TRUE,
+      api_token = panda_api,
+      base_query_file = system.file(
+        "json/plasma.json",
+        package = "ntrdWisconsin"
       )
+    )
 
-    shiny::observe({
-      # If ExtendedTask successfully ran...
-      if (biomarker_dat$status() == "success") {
-        # ... and the table for the ptid has not already been saved
-        if (!ptid() %in% names(biomarker_dat_tables)) {
-          biomarker_dat_tables[[ptid()]] <- biomarker_dat$result()
-        }
-      }
-    }) |>
-      shiny::bindEvent(biomarker_dat$status())
+    biomarker_server(
+      "Visual Ratings",
+      ptid = ptid, # shiny::reactive(input$current_studyid),
+      batch_loading = FALSE,
+      api_token = panda_api,
+      base_query_file = system.file(
+        "json/visual_ratings.json",
+        package = "ntrdWisconsin"
+      )
+    )
 
-    # Table to present while getting biomarker data.
-    loading_gt <- gt::gt(
-      data = data.frame(x = '<span class="loading">Loading data</span>')
-    ) |>
-      gt::fmt(
-        columns = "x",
-        fns = \(x) gt::html(x)
-      ) |>
-      gt::cols_label(x = "") |>
-      gt::opt_table_lines("none")
-
-    output$biomarker_table <- shiny::renderUI({
-      if (is.null(all_densities()) | is.null(all_cuts())) {
-        return(loading_gt)
-      }
-
-      if (ptid() %in% names(biomarker_dat_tables)) {
-        # lapply(biomarker_dat_tables[[ptid()]], \(x) {
-        #   bio_tab_for_gt(x, )
-        # }) |>
-        tmp <- purrr::imap(biomarker_dat_tables[[ptid()]], \(x, idx) {
-          bio_tab_for_gt(x, idx)
-        }) |>
-          bio_tab_to_html_table(
-            densities = all_densities(),
-            cuts = all_cuts(),
-            print_x = F
-          )
-
-        session$sendCustomMessage("initiateTooltips", message = list())
-
-        tmp
-      } else if (biomarker_dat$status() == "running") {
-        loading_gt
-      } else {
-        cli::cli_inform("{biomarker_dat$status()}")
-      }
-    })
+    behavioral_server(
+      id = "behavior",
+      dat = dat,
+      ptid = ptid
+    )
   })
 }
 
@@ -201,23 +172,13 @@ extension_server <- function(
 #' @export
 extension_app <- function(
   ptid = c("adrc00006"),
+  dat,
   biomarker_api,
-  all_values,
-  base_query_file = system.file(
-    "json/panda_template.json",
-    package = "ntrdWisconsin"
-  ),
   testing = FALSE
 ) {
   if (!shiny::is.reactive(biomarker_api)) {
     cli::cli_abort(
       "The `biomarker_api` argument must be a reactive value, such as `shiny::reactive()`."
-    )
-  }
-
-  if (!shiny::is.reactive(all_values)) {
-    cli::cli_abort(
-      "The `all_values` argument must be a reactive value, such as `shiny::reactive()`."
     )
   }
 
@@ -227,8 +188,8 @@ extension_app <- function(
   #   mirai::daemons(0)
   # }
 
-  # mirai::daemons(1)
-  # shiny::onStop(\(x) mirai::daemons(0))
+  mirai::daemons(1)
+  shiny::onStop(\() mirai::daemons(0))
 
   ui <- bslib::page_fluid(
     ntrd::shinyApp_header(),
@@ -237,46 +198,36 @@ extension_app <- function(
       label = "ADRC ptid",
       choices = ptid
     ),
-    extension_ui("biomarker-module")
+    bslib::navset_card_underline(
+      id = "long-trends",
+      bslib::nav_panel(
+        title = "Diagnoses",
+        shiny::h3("Diagnoses go here...")
+      )
+    )
   )
 
   server <- function(input, output, session) {
+    ext_ui <- extension_ui(id = "ext-module")
+    if (inherits(ext_ui, "shiny.tag")) {
+      ext_ui <- list(ext_ui)
+    }
+    for (nav_pan in ext_ui) {
+      bslib::nav_insert(
+        id = "long-trends",
+        nav_pan,
+      )
+    }
     srv <- extension_server(
-      "biomarker-module",
+      "ext-module",
       ptid = shiny::reactive(input$current_studyid),
       extras = shiny::reactive(
         list(
-          panda_api_token = biomarker_api(),
-          all_values = all_values()
+          panda_api_token = biomarker_api()
         )
-      ),
-      base_query_file = base_query_file
+      )
     )
   }
 
   shiny::shinyApp(ui, server, options = list(test.mode = testing))
-}
-
-
-if (FALSE) {
-  all_vals <- get_all_values(
-    api_key = getOption("panda_api_key") #,
-    # base_query_file = "inst/json/panda_template.json"
-  )
-
-  get_biomarker_data(
-    "adrc00006",
-    api_key = getOption("panda_api_key") #,
-    #base_query_file = "inst/json/panda_template.json"
-  )
-
-  # get_all_densities(all_vals)
-  # get_all_cuts(all_vals)
-
-  extension_app(
-    ptid = c("adrc00006", "adrc00121"),
-    biomarker_api = shiny::reactive(getOption("panda_api_key")),
-    all_values = shiny::reactive(all_vals) #,
-    # base_query_file = "inst/json/panda_template.json"
-  )
 }

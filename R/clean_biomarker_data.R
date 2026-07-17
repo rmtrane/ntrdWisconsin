@@ -18,35 +18,48 @@ clean_biomarker_data <- function(
   table_name,
   query
 ) {
+  as_df <- data.table::copy(as_df)
+
   name <- NULL
   analyte <- NULL
 
-  ## Patterns to replace in column names
-  replace_in_colnames <- c(
-    "_1_[^2]" = "_",
-    "_xw" = "_crosswalk",
-    "_derived" = "",
-    "Abeta" = "ABeta",
-    "ABeta_42" = "ABeta42"
+  # fmt: skip
+  levs <- list(
+    status_csf_lumi_ratio_fda = c("Negative", "Likely Positive", "Positive", "Unavailable"),
+    status_csf_roche_ratio_local = c("Negative", "Positive", "Unavailable"),
+    status_csf_amprion_asyn = c("SAA-", "SAA+", "Unavailable"),
+    status_plasma_hdx_ptau_local = c("Negative", "Indeterminate", "Positive", "Unavailable"),
+    status_plasma_hdx_ptau_ashton = c("Negative", "Indeterminate", "Positive", "Unavailable"),
+    status_plasma_lumi_ptau_local = c("Negative", "Indeterminate", "Positive", "Unavailable"),
+    status_plasma_lumi_ratio_fda = c("Negative", "Indeterminate", "Positive", "Unavailable")
   )
 
-  ## Remove view_participants_adrcnum if present
-  if ("view_participants_adrcnum" %in% names(as_df)) {
-    as_df$view_participants_adrcnum <- NULL
-  }
+  as_df[,
+    names(.SD) := lapply(.SD, as.Date),
+    .SDcols = grepv("date", names(as_df))
+  ]
 
-  if (table_name == "Local Roche CSF - Sarstedt freeze 3") {
-    if (!any(grepl("pTau181", colnames(as_df)))) {
-      colnames(as_df) <- gsub("pTau", "pTau181", colnames(as_df))
-    }
-  }
-
-  age_cols <- grep("age", colnames(as_df), value = TRUE)
-
-  if (length(age_cols) > 1) {
-    as_df <- as_df[which(as_df[[age_cols[1]]] == as_df[[age_cols[2]]])]
-    as_df[[age_cols[1]]] <- NULL
-  }
+  ## Fix column names
+  data.table::setnames(
+    as_df,
+    old = names(as_df),
+    new = gsub(
+      pattern = paste(
+        c(
+          "cg_csf_core1_status_",
+          "cg_plasma_core1_status_",
+          "view_cg_mk6240_braak_",
+          "view_petscan_appts_",
+          "_rating_0_1_2_3",
+          "cg_"
+        ),
+        collapse = "|"
+      ),
+      replacement = "",
+      x = names(as_df)
+    ),
+    skip_absent = TRUE
+  )
 
   ## Fix binary variables to 0/1
   as_df[,
@@ -59,45 +72,33 @@ clean_biomarker_data <- function(
       as.numeric(y)
     }),
     .SDcols = grep(pattern = "_bin$|braak", x = names(as_df), value = T)
-  ]
+  ][,
+    names(.SD) := purrr::imap(
+      .SD,
+      \(y, idy) {
+        if (idy == "enumber") {
+          return(y)
+        }
 
-  ## Fix character columns that should be numeric
-  as_df[,
-    names(.SD) := lapply(.SD, \(y) {
-      y[y %in% c("NA", "nan")] <- NA
+        y[y %in% c("NA", "nan")] <- NA
 
-      if (all(grepl("^\\d*\\.?\\d*$", y) | is.na(y))) {
-        y <- as.numeric(y)
+        if (idy %in% names(levs)) {
+          y <- factor(y, levels = levs[[idy]])
+
+          return(y)
+        }
+
+        is_num <- all(grepl("^\\d*\\.?\\d*$", y) | is.na(y))
+
+        if (is_num) {
+          return(as.numeric(y))
+        }
+
+        y
       }
-
-      y
-    }),
-    .SDcols = is.character
+    ),
+    .SDcols = \(z) !is.numeric(z) && !lubridate::is.Date(z)
   ]
-
-  ## Fix column names. Get columns from query
-  table_cols <- subset(query$query$tables, name == table_name)$columns[[
-    1
-  ]]$name
-
-  ## Find prefix that we want to remove
-  col_prefix <- table(gsub(
-    pattern = paste0("_", table_cols, "$", collapse = "|"),
-    replacement = "",
-    x = names(as_df)
-  ))
-
-  col_prefix <- names(which.max(col_prefix))
-
-  data.table::setnames(
-    as_df,
-    names(as_df),
-    new = gsub(
-      pattern = paste0(col_prefix, "_"),
-      replacement = "",
-      x = names(as_df)
-    )
-  )
 
   if (nrow(as_df) == 0) {
     out <- "Error: visits could not be matched to dates."
@@ -105,27 +106,6 @@ clean_biomarker_data <- function(
     class(out) <- "error-message"
 
     return(out)
-  }
-
-  for (i in seq_along(replace_in_colnames)) {
-    # For i = 1, we want to match on expression, but replace different expression. Hence the extra gsub in new.
-    data.table::setnames(
-      as_df,
-      old = grep(
-        pattern = names(replace_in_colnames)[i],
-        x = names(as_df),
-        value = TRUE
-      ),
-      new = gsub(
-        gsub("[^2]", "", names(replace_in_colnames)[i], fixed = T),
-        replace_in_colnames[i],
-        grep(
-          pattern = names(replace_in_colnames)[i],
-          x = names(as_df),
-          value = TRUE
-        )
-      )
-    )
   }
 
   for (i in colnames(as_df)) {
@@ -138,98 +118,63 @@ clean_biomarker_data <- function(
   ## Table specific adjustments
   ##
 
-  ## If Amprion - CSF
-  if (table_name == "Amprion - CSF a-Synuclein") {
-    data.table::setnames(
-      as_df,
-      c("Result", "date_of_collection"),
-      c("AlphaSyn-SAA_cat", "obtained_date"),
-      skip_absent = TRUE
+  ## If CSF - Core 1 AD Status
+  if (table_name == "csf") {
+    # old = new
+    renaming_vec <- c(
+      "date_csf" = "date",
+      "age_at_appointment" = "age",
+      "status_csf_lumi_ratio_fda" = "csf_ratio_lumi_ab42_ab40_fda_cat",
+      "status_csf_roche_ratio_local" = "csf_ratio_roche_ptau181_ab42_local_cat",
+      "status_csf_amprion_asyn" = "csf_amprion_asyn_cat",
+      "csf_ratio_lumi_ab42_ab40" = "csf_ratio_lumi_ab42_ab40_fda_raw",
+      "csf_ratio_roche_ptau181_ab42" = "csf_ratio_roche_ptau181_ab42_local_raw"
     )
   }
 
-  ## If we are dealing with HDX Plasma
-  if (table_name == "HDX Plasma - pTau217") {
-    data.table::setnames(
-      as_df,
-      old = "mean_conc",
-      new = "pTau217_raw"
-    )
+  if (table_name == "plasma") {
+    as_df$hdx_ptau217_local_raw <- as_df$plasma_ptau217_hdx
 
-    as_df$pTau217_cat <- categorize_ratio(
-      as_df$pTau217_raw,
-      thresholds = biomarker_thresholds[[table_name]]$pTau217$thresholds,
-      out = "bin"
+    renaming_vec <- c(
+      # old = new
+      c(
+        "date_plasma" = "date",
+        "age_at_appointment" = "age",
+        "status_plasma_lumi_ratio_fda" = "lumi_ptau217_over_ab42_fda_cat",
+        "plasma_ratio_lumi_ptau_ab42" = "lumi_ptau217_over_ab42_fda_raw",
+        "status_plasma_hdx_ptau_ashton" = "hdx_ptau217_ashton_cat",
+        "plasma_ptau217_hdx" = "hdx_ptau217_ashton_raw",
+        "status_plasma_hdx_ptau_local" = "hdx_ptau217_local_cat",
+        "status_plasma_lumi_ptau_local" = "lumi_ptau217_local_cat",
+        "plasma_ptau217_lumi" = "lumi_ptau217_local_raw"
+      )
     )
   }
 
-  ## If Lumipulse CSF
-  if (table_name == "Lumipulse CSF - ABeta") {
-    as_df <- data.table::dcast(
-      as_df[!is.na(analyte)],
-      ... ~ analyte,
-      value.var = "concentration"
+  if (table_name == "visual_ratings") {
+    # old = new
+    renaming_vec <- c(
+      "petscan_date" = "date",
+      "age_at_appointment" = "age",
+      "comment" = "comment_cat",
+      "braak_1" = "braak_1_cat",
+      "braak_2" = "braak_2_cat",
+      "braak_3" = "braak_3_cat",
+      "braak_4" = "braak_4_cat",
+      "braak_5" = "braak_5_cat",
+      "braak_6" = "braak_6_cat",
+      "nav4694_visual_ratings" = "nav4694_visual_ratings_cat",
+      "pib_visual_ratings_20180126" = "pib_visual_ratings_20180126_cat"
     )
-
-    data.table::setnames(
-      as_df,
-      old = c("AB40", "AB42"),
-      new = c("AB40_raw", "AB42_raw")
-    )
-
-    as_df$ABeta42_ABeta40_raw <- lumipulse_ABeta42_ABeta40_ratio(
-      as_df$AB40,
-      as_df$AB42
-    )
-    as_df$ABeta42_ABeta40_cat <- categorize_ratio(
-      as_df$ABeta42_ABeta40_raw,
-      thresholds = biomarker_thresholds[[
-        table_name
-      ]]$ABeta42_ABeta40$thresholds,
-      out = "bin"
-    )
-
-    as_df[, c("AB40_raw", "AB42_raw")] <- NULL
   }
 
-  ## If Lumipulse Plasma
-  if (table_name == "Lumipulse Plasma - pTau217") {
-    as_df <- data.table::dcast(
-      as_df[!is.na(analyte)],
-      enumber + age_at_appointment + obtained_date ~ analyte,
-      value.var = "concentration",
-      fun.aggregate = \(x) x[1], # If duplicates, pull first one.
-      fill = NA
-    )
+  data.table::setnames(
+    as_df,
+    old = names(renaming_vec),
+    new = unname(renaming_vec),
+    skip_absent = TRUE
+  )
 
-    data.table::setnames(
-      as_df,
-      old = c("AB40", "AB42", "pTau217"),
-      new = c("AB40_raw", "AB42_raw", "pTau217_raw")
-    )
-
-    as_df$pTau217_ABeta42_raw <- lumipulse_pTau217_ABeta42_ratio(
-      pTau217 = as_df$pTau217_raw,
-      ABeta42 = as_df$AB42_raw
-    )
-
-    as_df$pTau217_ABeta42_cat <- categorize_ratio(
-      as_df$pTau217_ABeta42_raw,
-      thresholds = biomarker_thresholds[[
-        table_name
-      ]]$pTau217_ABeta42$thresholds,
-      out = "bin"
-    )
-
-    as_df[, c("AB40_raw", "AB42_raw", "pTau217_raw")] <- NULL
-  }
-
-  ## If NTK MultiObs - CSF
-  # if (table_name == "NTK MultiObs - CSF analytes") {
-  #   as_df
-  # }
-
-  ## Check that there are at least some non-missing biomarker data. If not, return NULL
   if (
     all(is.na(
       as_df[,

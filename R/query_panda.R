@@ -1,146 +1,3 @@
-#' Get biomarker data
-#'
-#' @description
-#' Queries the [Panda](https://panda.medicine.wisc.edu) database to get biomarker data for
-#' ADRC participants.
-#'
-#' @param adrc_ptid A single string. ADRC participant id for which we want to pull biomarker data.
-#' @param api_key A single string. API key for panda database.
-#' @param base_query_file A single string. Optional.
-#'
-#' @returns
-#' A list of `data.table`s containing biomarker data, with names corresponding to the tables from
-#' Panda that was queried.
-#'
-#' @keywords internal
-get_biomarker_data <- function(
-  adrc_ptid = "adrc00006",
-  api_key,
-  base_query_file = system.file(
-    "json/panda_template.json",
-    package = "ntrdWisconsin"
-  )
-) {
-  name <- NULL # for devtools::check()
-
-  if (!is.character(adrc_ptid) || length(adrc_ptid) != 1) {
-    cli::cli_abort(
-      "{.arg adrc_ptid} must be a string, but is of class {.cls {class(adrc_ptid)}}"
-    )
-  }
-
-  missing_pkgs <- c("httr2", "jsonlite")[c(
-    !rlang::is_installed("httr2"),
-    !rlang::is_installed("jsonlite")
-  )]
-
-  if (length(missing_pkgs) > 0) {
-    cli::cli_abort(
-      "Please install {.pkg {missing_pkgs}} to pull data from Panda. You can use {.code install.packages(c(\"{paste0(missing_pkgs, collapse = '\", \"')}\"))} to do so."
-    )
-  }
-
-  ## Read the base query file and replace the participant id
-  my_query <- gsub(
-    x = readLines(base_query_file),
-    pattern = "adrc_ptid",
-    replacement = paste0(
-      "'",
-      adrc_ptid,
-      "'"
-    )
-  ) |> #head(n = 25) |> cat(sep = "\n")
-    jsonlite::fromJSON()
-
-  ## Build the request. First, set base URL
-  my_request <- httr2::request(
-    base_url = 'https://panda.medicine.wisc.edu/api/search/search'
-  ) |>
-    # Next, add authorization piece (this is where the API key is needed)
-    httr2::req_headers(
-      Authorization = paste("Bearer", api_key)
-    ) |>
-    # Finally, specify request method
-    httr2::req_method("POST")
-
-  ## We perform the request once for each table except for the Participants table.
-  ## This is included in all queries.
-  tables <- my_query$query$tables
-
-  tables <- tables[
-    !tables$name %in%
-      c(
-        "MRI Appointments",
-        "PET Appointments",
-        "LP Appointments",
-        "Participants"
-      ),
-    "name"
-  ]
-
-  all_responses <- lapply(tables, \(tab) {
-    cur_query <- my_query
-
-    cur_query$query$tables <- my_query$query$tables[
-      my_query$query$tables$name %in% c(tab, "Participants"),
-    ]
-
-    ## If no date is in any table, add PET Appointments, and make table join "inner"
-    all_names <- unlist(lapply(cur_query$query$tables$columns, `[[`, "name"))
-
-    if (!any(grepl("date", tolower(all_names)))) {
-      if (any(grepl("^age_lp$", tolower(all_names)))) {
-        extra_table <- "LP Appointments"
-      } else {
-        extra_table <- "PET Appointments"
-      }
-      cur_query$query$tables <- my_query$query$tables[
-        my_query$query$tables$name %in%
-          c(tab, extra_table, "Participants"),
-      ]
-    }
-
-    cur_query$query$tables$join[cur_query$query$tables$name == tab] <- "inner"
-
-    cur_req <- my_request |>
-      # Add the JSON to the body of the request.
-      httr2::req_body_json(
-        data = cur_query
-      )
-
-    cur_resp <- try(httr2::req_perform(cur_req), TRUE)
-
-    if (inherits(cur_resp, "try-error")) {
-      return(cur_resp)
-    }
-
-    if (cur_resp$status != 200) {
-      return(cur_resp$status)
-    }
-
-    httr2::resp_body_json(cur_resp)$data
-  }) |>
-    setNames(tables)
-
-  purrr::imap(all_responses, \(x, idx) {
-    if (is.na(x) | inherits(x, "try-error")) {
-      return(x)
-    }
-
-    if (x == "[]") {
-      out <- "No values found"
-      class(out) <- "error-message"
-
-      return(out)
-    }
-
-    as_df <- data.table::data.table(jsonlite::fromJSON(x))
-
-    clean_biomarker_data(as_df, table_name = idx, query = my_query)
-  })
-}
-
-
 #' Format a table for gt
 #'
 #' @description
@@ -155,15 +12,26 @@ get_biomarker_data <- function(
 #'
 #' @keywords internal
 bio_tab_for_gt <- function(
-  tab,
-  table_name
+  tab
 ) {
   if (inherits(tab, "try-error")) {
     return(tab)
   }
 
+  no_val_dt <- data.table::data.table(
+    name = "No values found",
+    name_label = "No values found"
+  )
+
   if (is.null(tab)) {
-    return(data.table::data.table(name = "No values found"))
+    return(no_val_dt)
+  }
+
+  # Remove missing dates
+  tab <- tab[!is.na(date)]
+
+  if (nrow(tab) == 0) {
+    return(no_val_dt)
   }
 
   if (inherits(tab, "error-message")) {
@@ -176,313 +44,170 @@ bio_tab_for_gt <- function(
     )
   }
 
-  colnames(tab)[grepl(pattern = "date", colnames(tab))] <- "date"
-  colnames(tab)[grepl(pattern = "age", colnames(tab))] <- "Age_raw"
+  tab <- data.table::copy(tab)
+
+  # Rename age column
+  names(tab)[which(names(tab) == "age")] <- "Age_raw"
 
   # To avoid "no visible binding for global variable" in devtools::check()
   name <- value.name <- bin <- variable <- value <- NULL
 
-  # Remove missing dates
-  tab <- tab[!is.na(date)]
-  tab[, date := as.Date(date)]
+  if (!lubridate::is.Date(tab$date)) {
+    tab[, date := as.Date(date)]
+  }
+
+  tab[,
+    names(.SD) := lapply(.SD, as.character),
+    .SDcols = grepv("_cat$", names(tab))
+  ]
 
   if (!"date" %in% colnames(tab)) {
     tab$date <- paste("Visit", seq_along(tab$age_raw))
   }
 
-  ## If _bin is present, data was pulled directly from Panda.
-  if (any(grepl("_bin$", x = names(tab)))) {
-    ## In rare cases, entries might be present with no raw or bin values. We remove these
-    rows_include <- rowSums(
-      !(tab[,
-        lapply(.SD, is.na),
-        .SDcols = colnames(tab)[
-          grepl("_raw$|_bin$", colnames(tab)) & !grepl("Age", colnames(tab))
-        ]
-      ])
-    ) >
-      0
+  ## In rare cases, entries might be present with no raw or bin values. We remove these
+  rows_include <- rowSums(
+    !(tab[,
+      lapply(.SD, is.na),
+      .SDcols = colnames(tab)[
+        grepl("_raw$|_cat$", colnames(tab)) & !grepl("Age", colnames(tab))
+      ]
+    ])
+  ) >
+    0
 
-    tab <- data.table::melt(
-      tab[rows_include],
-      id.vars = c("date"),
-      measure.vars = data.table::measure(
-        name,
-        value.name,
-        pattern = "(.*)_(raw|bin)"
+  tab <- data.table::melt(
+    tab[rows_include],
+    id.vars = c("date"),
+    measure.vars = data.table::measure(
+      name,
+      value.name,
+      pattern = "(.*)_(raw|cat)"
+    )
+  )
+
+  tab[,
+    c("cat", "name_label") := list(
+      html_cat(cat, name),
+      data.table::fcase(
+        name == "csf_amprion_asyn"                   , "Amprion aSyn SAA"                              ,
+        name == "csf_ratio_lumi_ab42_ab40_fda"       , "Fujirebio Lumipulse A&beta;42/A&beta;40 (FDA)" ,
+        name == "csf_ratio_roche_ptau181_ab42_local" , "Roche pTau181/A&beta;42 (local)"               ,
+        name == "hdx_ptau217_ashton"                 , "Quanterix HDX pTau217 (Ashton et al.)"         ,
+        name == "hdx_ptau217_local"                  , "Quanterix HDX pTau217 (local)"                 ,
+        name == "lumi_ptau217_local"                 , "Fujirebio Lumipulse pTau217 (local)"           ,
+        name == "lumi_ptau217_over_ab42_fda"         , "Fujirebio Lumipulse pTau217/A&beta;42 (FDA)"   ,
+        name == "braak_1"                            , "Stage I"                                       ,
+        name == "braak_2"                            , "Stage II"                                      ,
+        name == "braak_3"                            , "Stage III"                                     ,
+        name == "braak_4"                            , "Stage IV"                                      ,
+        name == "braak_5"                            , "Stage V"                                       ,
+        name == "braak_6"                            , "Stage VI"                                      ,
+        name == "comment"                            , "Braak Comment"                                 ,
+        name == "nav4694_visual_ratings"             , "NAV4694 Scan Rating"                           ,
+        name == "pib_visual_ratings_20180126"        , "PiB Visual Rating"                             ,
+        default = name
       )
     )
+  ]
 
-    # tab <- tab[!is.na(raw)]
-
-    tab[,
-      c("name", "raw", "bin") := list(
-        factor(name, levels = unique(name)),
-        lapply(
-          data.table::transpose(.SD),
-          \(x) {
-            c(
-              list(raw = x[1])[!is.na(x[1])],
-              list(
-                list(
-                  icon = '<i class="glyphicon glyphicon-minus-sign" style="color: green;"></i>',
-                  text = 'Negative'
-                ),
-                list(
-                  icon = '<i class="glyphicon glyphicon-plus-sign" style="color: red;"></i>',
-                  text = 'Positive'
-                )
-              )[[x[2] + 1]]
-            )
-          }
-        ),
-        NULL
-      ),
-      .SDcols = c("raw", "bin")
-    ]
-
-    tab <- data.table::dcast(
-      tab,
-      name ~ date,
-      value.var = "raw"
-    )
-
-    tab$name <- as.character(tab$name)
-  }
-
-  if ("rating_0_1_2_3" %in% names(tab)) {
-    tab <- data.table::melt(
-      tab,
-      id.vars = c("date"),
-      measure.vars = c("Age_raw", "rating_0_1_2_3")
-    )
-
-    tab[,
-      c("variable", "value") := list(
-        gsub(
-          "rating_0_1_2_3",
-          "PiB Visual Rating",
-          x = gsub("_raw", "", x = variable)
-        ),
-        # fmt: skip
-        data.table::fcase(
-          variable == "Age_raw", as.list(value),
-          value < 5, list(
-            "0" = list(
-              icon = '<i class="glyphicon glyphicon-minus-sign" style="color:green;"></i>',
-              text = "Clearly negative (0)"
-            ),
-            "1" = list(
-              icon = '<i class="glyphicon glyphicon-minus-sign" style="color:green;"></i>',
-              text = "Clearly negative (1)"
-            ),
-            "2" = list(
-              text = 'Ambiguous/Indeterminate'
-            ),
-            "3" = list(
-              icon = '<i class="glyphicon glyphicon-plus-sign" style="color:red;"></i>',
-              text = "Positive"
-            ),
-            "5" = list()
-          )[pmin(as.character(value), 5, na.rm = T)]
-        )
-      )
-    ]
-
-    tab <- data.table::dcast(
-      tab,
-      variable ~ date,
-      value.var = "value"
-    )
-
-    data.table::setnames(
-      tab,
-      "variable",
-      "name"
-    )
-  }
-
-  if ("braak_1" %in% colnames(tab)) {
-    tab <- data.table::melt(
-      tab,
-      id.vars = "date"
-    )
-
-    tab[,
-      c("variable", "value") := list(
-        c(
-          "Age",
-          "Comment",
-          "Stage I",
-          "Stage II",
-          "Stage III",
-          "Stage IV",
-          "Stage V",
-          "Stage VI"
-        )[match(
-          tab$variable,
+  tab[,
+    c("name", "values", "raw", "cat") := list(
+      # list(
+      name = factor(name, levels = sort(unique(name))),
+      values = mapply(
+        raw,
+        cat,
+        FUN = \(x, y) {
           c(
-            "Age_raw",
-            "comment",
-            "braak_1",
-            "braak_2",
-            "braak_3",
-            "braak_4",
-            "braak_5",
-            "braak_6"
+            if (!is.na(x)) list(raw = x),
+            list(cat = y)
           )
-        )],
-        # fmt: skip
-        value = ifelse(
-          variable %in% c("Age_raw", "comment"), 
-          as.list(value),
-          list(
-            list(
-              icon = '<i class="glyphicon glyphicon-minus-sign" style="color:green;"></i>',
-              text = 'Negative'
-            ),
-            list(
-              icon = '<i class="glyphicon glyphicon-plus-sign" style="color:red;"></i>',
-              text = 'Positive'
-            )
-          )[value + 1]
-        )
-      )
-    ]
-
-    tab <- data.table::dcast(
-      tab,
-      variable ~ date,
-      value.var = "value"
-    )
-
-    data.table::setnames(
-      tab,
-      "variable",
-      "name"
-    )
-  }
-
-  if (any(grepl("AlphaSyn-SAA", names(tab)))) {
-    tab <- data.table::melt(
-      tab,
-      id.vars = c("date"),
-      measure.vars = data.table::measure(
-        name,
-        value.name,
-        pattern = "(.*)_(raw|cat)"
-      )
-    )
-
-    tab[,
-      c("name", "raw", "cat") := list(
-        factor(name, levels = unique(name)),
-        lapply(
-          data.table::transpose(.SD),
-          \(x) {
-            icon <- data.table::fcase(
-              x[2] == "Not Detected"                  , '<i class="glyphicon glyphicon-minus-sign" style="color: green;"></i>' ,
-              x[2] %in% c("Detected-1", "Detected-2") , '<i class="glyphicon glyphicon-plus-sign" style="color: red;"></i>'    ,
-              default = NA
-            )
-
-            c(
-              list(raw = as.numeric(x[1])),
-              list(
-                icon = if (!is.na(icon)) icon,
-                text = x[2]
-              )
-            )
-          }
-        ),
-        NULL
+        },
+        SIMPLIFY = FALSE
       ),
-      .SDcols = c("raw", "cat")
-    ]
-
-    tab <- data.table::dcast(
-      tab,
-      name ~ date,
-      value.var = "raw"
+      NULL,
+      NULL
     )
+  ]
 
-    tab$name <- as.character(tab$name)
-  }
+  tab <- data.table::dcast(
+    tab,
+    name + name_label ~ date,
+    value.var = "values"
+  )
 
-  if (any(grepl("_cat$", x = names(tab)))) {
-    ## In rare cases, entries might be present with no raw or bin values.
-    rows_include <- rowSums(
-      !(tab[,
-        lapply(.SD, is.na),
-        .SDcols = colnames(tab)[
-          grepl("_raw$|_bin$", colnames(tab)) & !grepl("Age", colnames(tab))
-        ]
-      ])
-    ) >
-      0
-
-    tab <- data.table::melt(
-      tab[rows_include],
-      id.vars = "date",
-      measure.vars = data.table::measure(
-        name,
-        value.name,
-        pattern = "(.*)_(raw|cat)"
-      )
-    )
-
-    tab <- merge(
-      tab,
-      data.table::rbindlist(
-        lapply(biomarker_thresholds[[table_name]], `[[`, "thresholds"),
-        idcol = "name"
-      )[, c("name", "bin", "label"), with = F],
-      by.x = c("cat", "name"),
-      by.y = c("bin", "name"),
-      all.x = TRUE,
-      all.y = FALSE
-    )
-
-    tab$icon <- data.table::fcase(
-      tab$cat == 0 , '<i class="glyphicon glyphicon-minus-sign" style="color: green;"></i>' ,
-      tab$cat == 1 , '<i class="glyphicon glyphicon-plus-sign" style="color: red;"></i>'    ,
-      default = NA
-    )
-
-    tab$cat <- purrr::map2(tab$label, tab$icon, \(x, y) {
-      list(
-        text = if (!is.na(x)) x,
-        icon = if (!is.na(y)) y
-      )
-    })
-
-    tab <- tab[,
-      list(
-        name = factor(name, levels = unique(name)),
-        date = date,
-        raw = lapply(
-          data.table::transpose(.SD),
-          \(x) {
-            c(
-              list(raw = x[[1]]),
-              if (any(!unlist(lapply(x[[2]], is.na)))) x[[2]]
-            )
-          }
-        )
-      ),
-      .SDcols = c("raw", "cat")
-    ]
-
-    tab <- data.table::dcast(
-      tab,
-      name ~ date,
-      value.var = "raw"
-    )
-
-    tab$name <- as.character(tab$name)
-  }
+  tab$name <- as.character(tab$name)
 
   tab
+}
+
+
+html_cat <- function(x, name) {
+  negative_html <- list(
+    icon = '<i class="glyphicon glyphicon-minus-sign" style="color:green;"></i>',
+    text = 'Negative'
+  )
+
+  positive_html <- list(
+    icon = '<i class="glyphicon glyphicon-plus-sign" style="color:red;"></i>',
+    text = 'Positive'
+  )
+
+  likely_positive_html <- list(
+    icon = '<i class="glyphicon glyphicon-plus-sign" style="color:#ffa9a9;"></i>',
+    text = 'Likely Positive'
+  )
+
+  data.table::fcase(
+    name == "comment" & !is.na(x) & x != ""       , as.list(x)                                                               ,
+    grepl("braak", name) & x == 0                 , list(list(icon = negative_html$icon, text = "Clearly negative (0)"))     ,
+    grepl("braak", name) & x == 1                 , list(list(icon = negative_html$icon, text = "Clearly negative (1)"))     ,
+    grepl("braak", name) & x == 2                 , list(list(text = "Ambiguous/Indeterminate"))                             ,
+    grepl("braak", name) & x == 3                 , list(positive_html)                                                      ,
+    grepl("nav4694_visual_rating", name) & x == 0 , list(negative_html)                                                      ,
+    grepl("nav4694_visual_rating", name) & x == 1 , list(positive_html)                                                      ,
+    grepl("pib_visual_ratings", name) & x == 0    , list(list(icon = negative_html$icon, text = "Clearly PiB negative (0)")) ,
+    grepl("pib_visual_ratings", name) & x == 1    , list(list(icon = negative_html$icon, text = "Clearly PiB negative (1)")) ,
+    grepl("pib_visual_ratings", name) & x == 2    , list(list(text = "Ambiguous/Indeterminate"))                             ,
+    grepl("pib_visual_ratings", name) & x == 3    , list(list(icon = positive_html$icon, text = "PiB+"))                     ,
+    x %in% c("Positive", "SAA+")                  , list(positive_html)                                                      ,
+    x %in% c("Negative", "SAA-")                  , list(negative_html)                                                      ,
+    x == "Indeterminate"                          , list(list(text = "Indeterminate"))                                       ,
+    x == "Unavailable"                            , list(list(text = "Unavailable"))                                         ,
+    x == "Likely Positive"                        , list(likely_positive_html)                                               ,
+    default = list(list())
+  )
+
+  # if (all(x %in% 0:5)) {
+  #   out <- list(
+  #     "0" = list(
+  #       icon = negative_html$icon,
+  #       text = "Clearly negative (0)"
+  #     ),
+  #     "1" = list(
+  #       icon = negative_html$icon,
+  #       text = "Clearly negative (1)"
+  #     ),
+  #     "2" = list(
+  #       text = 'Ambiguous/Indeterminate'
+  #     ),
+  #     "3" = positive_html,
+  #     "5" = list()
+  #   )[as.character(x)]
+  # }
+
+  # if (x %in% c("Positive", "SAA+")) {
+  #   return(positive_html)
+  # }
+  # if (x %in% c("Negative", "SAA-")) {
+  #   return(negative_html)
+  # }
+  # if (x == "Likely Positive") {
+  #   return(likely_positive_html)
+  # }
+
+  # NA
 }
 
 #' Transform a table to a gt object
@@ -600,22 +325,49 @@ bio_tab_to_gt <- function(tab_for_gt) {
 #'
 #' @param api_key A single string. Panda API key.
 #' @param base_query_file Path to the JSON query template file.
+#' @param adrc_ptids Vector of ID's of ADRC participants for which biomarker
+#'   data should be pulled. If NULL (default), data for all participants are
+#'   pulled.
 #'
 #' @returns A named list of `data.table`s, one per biomarker table.
 #'
 #' @keywords internal
-get_all_values <- function(
+get_biomarker_data <- function(
   api_key = getOption("panda_api_key"),
-  base_query_file = system.file(
-    "json/panda_template.json",
-    package = "ntrdWisconsin"
-  )
+  base_query_file = "inst/json/plasma.json",
+  #   system.file(
+  #   "json/csf.json",
+  #   package = "ntrdWisconsin"
+  # ),
+  adrc_ptids = NULL
 ) {
   # To avoid notes in R CMD check
-  name <- NULL
+  name <- enumber <- NULL
 
   base_query <- readLines(base_query_file) |>
     jsonlite::fromJSON()
+
+  if (!is.null(adrc_ptids)) {
+    all_tabs <- base_query$query$tables
+
+    if (length(adrc_ptids) == 1) {
+      oper <- "="
+      vals <- paste0("\"'", adrc_ptids, "'\"")
+    } else {
+      oper <- "in"
+      vals <- paste0("\"", adrc_ptids, "\"", collapse = ",")
+    }
+
+    json_text <- paste0('[{"operator":"', oper, '","values":[', vals, ']}]')
+
+    all_tabs[all_tabs$name == "Enrollments", ]$columns[[1]]$constraints[[
+      1
+    ]] <- jsonlite::fromJSON(json_text)
+
+    all_tabs[all_tabs$name == "Enrollments", "join"] <- "inner"
+
+    base_query$query$tables <- all_tabs
+  }
 
   base_request <- httr2::request(
     base_url = 'https://panda.medicine.wisc.edu/api/search/search'
@@ -627,87 +379,52 @@ get_all_values <- function(
     # Finally, specify request method
     httr2::req_method("POST")
 
-  all_tables <- base_query$query$tables
-
-  ## Tables to work with (remove participants, appointments, visual rating)
-  all_tables_names <- all_tables$name[
-    # !stringr::str_detect(
-    !grepl(
-      "Participants|Appointments|Visual Rating",
-      x = all_tables$name
+  cur_req <- base_request |>
+    httr2::req_body_json(
+      data = base_query
     )
-  ]
 
-  # For each table, get everything.
-  all_values <- lapply(
-    setNames(all_tables_names, all_tables_names),
-    \(cur_table_name) {
-      cur_query <- base_query
+  resp <- try(httr2::req_perform(cur_req), TRUE)
 
-      cur_query$query$tables <- subset(
-        cur_query$query$tables,
-        name == cur_table_name
-      )
+  if (inherits(resp, "try-error")) {
+    return(resp)
+  }
 
-      ## Remove all constraints, which ensures we get all values
-      cur_query$query$tables$columns[[1]]$constraints <- NULL
+  if (resp$status != 200) {
+    return(resp$status)
+  }
 
-      ## For Lumipulse, we still need
-      if (!grepl("Lumipulse", cur_table_name)) {
-        cur_query$query$tables$columns[[1]] <-
-          cur_query$query$tables$columns[[1]][
-            !grepl(
-              "age|date|enumber",
-              x = cur_query$query$tables$columns[[1]]$name
-            ),
-          ]
-      }
+  resp <- httr2::resp_body_json(resp)$data
 
-      cur_req <- base_request |>
-        httr2::req_body_json(
-          data = cur_query
-        )
+  if (resp == "[]") {
+    return(data.table::data.table(enumber = adrc_ptids))
+  }
 
-      cur_resp <- try(httr2::req_perform(cur_req), TRUE)
+  resp <- jsonlite::fromJSON(resp) |>
+    data.table::as.data.table()
 
-      if (inherits(cur_resp, "try-error")) {
-        return(cur_resp)
-      }
+  resp <- resp[grepl("^adrc", enumber, ignore.case = TRUE)]
 
-      if (cur_resp$status != 200) {
-        return(cur_resp$status)
-      }
+  if (any(grepl("csf", base_query$query$tables$name, ignore.case = TRUE))) {
+    table_nam <- "csf"
+  }
 
-      httr2::resp_body_json(cur_resp)$data
+  if (any(grepl("plasma", base_query$query$tables$name, ignore.case = TRUE))) {
+    table_nam <- "plasma"
+  }
 
-      # jsonlite::fromJSON(
-      #   httr2::resp_body_json(cur_resp)$data
-      # )
-    }
+  # fmt: skip
+  if (any(grepl("visual ratings", base_query$query$tables$name, ignore.case = TRUE))) {
+    table_nam <- "visual_ratings"
+  }
+
+  # resp
+
+  clean_biomarker_data(
+    as_df = resp,
+    table_name = table_nam,
+    query = base_query
   )
-
-  purrr::imap(all_values, \(x, idx) {
-    if (is.na(x) | inherits(x, "try-error")) {
-      return(x)
-    }
-
-    if (x == "[]" | inherits(x, "error-message")) {
-      return(NULL)
-    }
-
-    as_df <- data.table::data.table(jsonlite::fromJSON(x))
-
-    as_df <- clean_biomarker_data(
-      as_df = as_df,
-      table_name = idx,
-      query = base_query
-    )
-
-    as_df[,
-      grep(pattern = "_bin|_cat|_raw", names(as_df), value = TRUE),
-      with = FALSE
-    ]
-  })
 }
 
 
@@ -717,7 +434,7 @@ get_all_values <- function(
 #' are used. Otherwise, thresholds are inferred from the data by finding
 #' boundaries between bin categories.
 #'
-#' @param all_values A named list of `data.table`s as returned by `get_all_values()`.
+#' @param all_values A named list of `data.table`s.
 #'
 #' @returns A named list of `data.table`s with columns `name`, `bin`, `color`,
 #'   `min_obs`, and `max_obs`.
@@ -735,7 +452,8 @@ get_all_cuts <- function(all_values) {
     if (idx == "Amprion - CSF a-Synuclein") {
       return()
     }
-    ## If we know the thresholds, use these
+
+    ## If we know the thresholds, use these.
     if (idx %in% names(biomarker_thresholds)) {
       out <- lapply(
         biomarker_thresholds[[idx]],
@@ -767,12 +485,14 @@ get_all_cuts <- function(all_values) {
     }
 
     ## Otherwise, we infer from data.
-    if (any(grepl("_cat$", colnames(x)))) {
-      colnames(x) <- gsub("_cat", "_bin", colnames(x))
+
+    ## If there are no raw scores, abort
+    if (!any(grepl("_raw$", names(x)))) {
+      return()
     }
 
-    if (!any(grepl("_(raw|bin)", colnames(x)))) {
-      return()
+    if (any(grepl("_cat$", colnames(x)))) {
+      colnames(x) <- gsub("_cat", "_bin", colnames(x))
     }
 
     data.table::melt(
@@ -826,43 +546,42 @@ get_all_cuts <- function(all_values) {
 #' Calculates Gaussian kernel density estimates for each raw biomarker column,
 #' using Sheather-Jones bandwidth selection.
 #'
-#' @param all_values A named list of `data.table`s as returned by `get_all_values()`.
+#' @param x A named list of `data.table`s as returned by `get_biomarker_data()`.
 #'
 #' @returns A named list of density objects, nested by table and biomarker name.
 #'
 #' @keywords internal
-get_all_densities <- function(all_values) {
-  purrr::map(all_values, \(x) {
-    if (is.null(x) | nrow(x) == 0 | inherits(x, "try-error")) {
+get_all_densities <- function(x) {
+  if (is.null(x) | nrow(x) == 0 | inherits(x, "try-error")) {
+    return(NULL)
+  }
+
+  x <- x[, grepv(pattern = "_raw$", names(x)), with = F]
+
+  if (ncol(x) == 0) {
+    return(NULL)
+  }
+
+  dens <- purrr::imap(x, \(y, idy) {
+    if (!grepl(pattern = "_raw$", idy)) {
       return(NULL)
     }
 
-    x <- x[, grepl(pattern = "_raw$", names(x)), with = F]
+    y <- na.omit(y)
 
-    if (ncol(x) == 0) {
-      return(NULL)
-    }
+    density(
+      y,
+      from = 0,
+      kernel = "gaussian",
+      bw = "SJ-ste",
+      adjust = ifelse(length(y) > 500, 1, 1.5),
+      na.rm = T
+    )
+  })
 
-    dens <- purrr::imap(x, \(y, idy) {
-      if (!grepl(pattern = "_raw$", idy)) {
-        return(NULL)
-      }
-
-      y <- na.omit(y)
-
-      density(
-        y,
-        from = 0,
-        kernel = "gaussian",
-        bw = "SJ-ste",
-        adjust = ifelse(length(y) > 500, 1, 1.5),
-        na.rm = T
-      )
-    })
-
-    dens[!unlist(lapply(dens, is.null))]
-  }) |>
-    purrr::discard(purrr::is_null)
+  dens[!unlist(lapply(dens, is.null))]
+  # }) |>
+  #   purrr::discard(purrr::is_null)
 }
 
 

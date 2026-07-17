@@ -108,17 +108,3 @@ categorize_ratio <- function(ratio, thresholds, out = c("label", "bin")) {
     include.lowest = TRUE
   )]
 }
-
-if (FALSE) {
-  tibble::tibble(
-    ratio = seq(0, 1, by = 0.00001)
-  ) |>
-    dplyr::mutate(
-      label = categorize_ratio(ratio, thresholds, out = "label"),
-      bin = categorize_ratio(ratio, thresholds, out = "bin")
-    ) |>
-    dplyr::filter(
-      .by = bin,
-      ratio %in% range(ratio)
-    )
-}

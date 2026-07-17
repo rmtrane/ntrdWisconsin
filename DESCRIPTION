@@ -1,6 +1,6 @@
 Package: ntrdWisconsin
 Title: Neuropsychological Test Result Dashboards for ADRC Wisconsin
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: 
     person(
         given = "Ralph", 
@@ -20,6 +20,7 @@ Imports:
     bslib,
     cli,
     data.table,
+    forcats,
     gt,
     httr2,
     jsonlite,
@@ -33,7 +34,6 @@ Imports:
     purrr,
     REDCapR,
     remotes,
-    rlang,
     S7,
     safer,
     shiny
@@ -45,7 +45,10 @@ Remotes:
     rmtrane/ntrd
 Config/ntrd/extension: true
 Collate: 
+    'behavioralModule.R'
+    'behavioral_table.R'
     'bio_tab_to_html_table.R'
+    'biomarkerModule.R'
     'biomarker_density_plot.R'
     'biomarker_ratios.R'
     'biomarker_thresholds.R'
@@ -63,6 +66,8 @@ Collate:
     'ntrdWisconsin-package.R'
     'query_panda.R'
     'readOldSavedFile.R'
+    'respval_behavioral_data.R'
+    'simulate_data_table.R'
     'updates.R'
     'wadrc_data_prep.R'
     'wadrc_uds2_redcap_fields.R'
@@ -73,3 +78,8 @@ Collate:
     'wadrc_uds4_to_nacc.R'
     'zzz.R'
 LazyData: true
+Suggests: 
+    testthat (>= 3.0.0),
+    withr,
+    readr
+Config/testthat/edition: 3

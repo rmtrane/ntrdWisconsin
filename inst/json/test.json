@@ -2,21 +2,214 @@
   "query": {
     "tables": [
       {
-        "name": "Vgroups",
-        "id": 671,
+        "name": "Enrollments",
+        "id": 1230,
         "class": "cg_tn",
         "join": "left",
         "columns": [
           {
-            "name": "Vgroup_id",
-            "id": 675,
+            "name": "enumber",
+            "id": 45350,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "CSF - Core 1 AD Status",
+        "id": 1368,
+        "class": "cg_tn",
+        "join": "inner",
+        "columns": [
+          {
+            "name": "age_at_appointment",
+            "id": 54959,
             "class": "cg_tn_cn",
             "show": true,
             "constraints": []
           },
           {
-            "name": "Date (vgroup)",
-            "id": 674,
+            "name": "date_csf",
+            "id": 54962,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_csf_lumi_ratio_fda",
+            "id": 54963,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_csf_roche_ratio_local",
+            "id": 54964,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_csf_amprion_asyn",
+            "id": 54965,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "csf_ratio_lumi_ab42_ab40",
+            "id": 54966,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "csf_ratio_roche_ptau181_ab42",
+            "id": 54967,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "Plasma - Core 1 AD Status",
+        "id": 1367,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "age_at_appointment",
+            "id": 54946,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "date_plasma",
+            "id": 54949,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_plasma_lumi_ratio_fda",
+            "id": 54950,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_plasma_hdx_ptau_ashton",
+            "id": 54951,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_plasma_hdx_ptau_local",
+            "id": 54952,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_plasma_lumi_ptau_local",
+            "id": 54953,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "plasma_ratio_lumi_ptau_ab42",
+            "id": 54954,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "plasma_ptau217_hdx",
+            "id": 54955,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "plasma_ptau217_lumi",
+            "id": 54956,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "MK6240_NFT_Rating",
+        "id": 865,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "comment",
+            "id": 11284,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_1",
+            "id": 19153,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_2",
+            "id": 19154,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_3",
+            "id": 19155,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_4",
+            "id": 19156,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_5",
+            "id": 19157,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "braak_6",
+            "id": 19158,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "NAV4694 Visual Ratings",
+        "id": 1235,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "rating_0_1_2_3",
+            "id": 45651,
             "class": "cg_tn_cn",
             "show": true,
             "constraints": []
@@ -34,18 +227,26 @@
             "id": 10364,
             "class": "cg_tn_cn",
             "show": true,
-            "constraints": [
-              {
-                "operator": "=",
-                "values": [
-                  "'0'"
-                ]
-              }
-            ]
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "PET Appointments",
+        "id": 674,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "Petscan date",
+            "id": 719,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
           },
           {
-            "name": "id",
-            "id": 53428,
+            "name": "Age at Appointment",
+            "id": 747,
             "class": "cg_tn_cn",
             "show": true,
             "constraints": []
@@ -56,7 +257,7 @@
     "offset": 0,
     "limit": -1,
     "format": "csv",
-    "row_format": "visit_centric",
+    "row_format": "participant_centric",
     "name": null,
     "save": null
   }

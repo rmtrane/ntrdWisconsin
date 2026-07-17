@@ -1,0 +1,78 @@
+{
+  "query": {
+    "tables": [
+      {
+        "name": "Enrollments",
+        "id": 1230,
+        "class": "cg_tn",
+        "join": "left",
+        "columns": [
+          {
+            "name": "enumber",
+            "id": 45350,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      },
+      {
+        "name": "CSF - Core 1 AD Status",
+        "id": 1368,
+        "class": "cg_tn",
+        "join": "inner",
+        "columns": [
+          {
+            "name": "age_at_appointment",
+            "id": 54959,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "date_csf",
+            "id": 54962,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_csf_lumi_ratio_fda",
+            "id": 54963,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_csf_roche_ratio_local",
+            "id": 54964,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "status_csf_amprion_asyn",
+            "id": 54965,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "csf_ratio_lumi_ab42_ab40",
+            "id": 54966,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          },
+          {
+            "name": "csf_ratio_roche_ptau181_ab42",
+            "id": 54967,
+            "class": "cg_tn_cn",
+            "show": true,
+            "constraints": []
+          }
+        ]
+      }
+    ]
+  }
+}
