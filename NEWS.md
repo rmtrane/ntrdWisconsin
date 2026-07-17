@@ -1,3 +1,17 @@
+# ntrdWisconsin 0.1.2
+
+New features/improvements:
+
+* behavioral checklist table now included
+
+* biomarker table updated 
+to use new Panda table bringing performance improvements.
+
+Bug fixes:
+
+* RAVLT distractor list was missing from UDS-4. Now it's back.
+
+
 # ntrdWisconsin 0.1.1
 
 Bug fixes:
