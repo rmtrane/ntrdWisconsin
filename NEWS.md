@@ -4,6 +4,8 @@ Bug fixes:
 
 * Issue with visual ratings table not displaying when Braak comment not empty. 
 
+* Fixes wrong visuals for Braak stages.
+
 # ntrdWisconsin 0.1.2
 
 New features/improvements:
