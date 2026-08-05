@@ -323,7 +323,7 @@ bio_tab_to_html_table <- function(
               print(x)
             }
 
-            # if (x == 2) {
+            # if (x == 8) {
             #   browser()
             # }
 
@@ -428,7 +428,7 @@ bio_tab_to_html_table <- function(
                 unname(purrr::imap(
                   obs,
                   \(y, idy) {
-                    # if (x == 2 & idy == "2023-01-20") {
+                    # if (x == 8 & idy == "2025-09-08") {
                     #   browser()
                     # }
 
@@ -669,6 +669,8 @@ create_td <- function(
     )
   }
 
+  print(y)
+
   return(
     shiny::tags$td(
       class = paste(
@@ -716,7 +718,7 @@ cell_content <- function(
     class = "flex-cell-wrapper",
     shiny::tags$span(
       class = "flex-cell-left",
-      if (!is.null(cell$icon)) shiny::HTML(cell$icon)
+      if ("icon" %in% names(cell) && !is.null(cell$icon)) shiny::HTML(cell$icon)
     ),
     shiny::tags$span(
       class = "flex-cell-center",

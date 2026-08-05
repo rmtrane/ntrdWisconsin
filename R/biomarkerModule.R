@@ -131,7 +131,7 @@ biomarker_server <- function(
         return(loading_gt)
       }
 
-      # if (id == "Visual Ratings") {
+      # if (id == "Visual Ratings" & tolower(ptid()) == "adrc01102") {
       #   browser()
       # }
 

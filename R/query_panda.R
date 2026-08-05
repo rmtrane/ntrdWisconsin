@@ -160,7 +160,7 @@ html_cat <- function(x, name) {
   )
 
   data.table::fcase(
-    name == "comment" & !is.na(x) & x != ""       , as.list(x)                                                               ,
+    name == "comment" & !is.na(x) & x != ""       , lapply(as.list(x), \(y) list(text = y))                                  ,
     grepl("braak", name) & x == 0                 , list(list(icon = negative_html$icon, text = "Clearly negative (0)"))     ,
     grepl("braak", name) & x == 1                 , list(list(icon = negative_html$icon, text = "Clearly negative (1)"))     ,
     grepl("braak", name) & x == 2                 , list(list(text = "Ambiguous/Indeterminate"))                             ,

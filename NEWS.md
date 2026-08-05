@@ -1,3 +1,9 @@
+# ntrdWisconsin 0.1.3
+
+Bug fixes:
+
+* Issue with visual ratings table not displaying when Braak comment not empty. 
+
 # ntrdWisconsin 0.1.2
 
 New features/improvements:

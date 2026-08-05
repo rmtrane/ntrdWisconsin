@@ -1,6 +1,6 @@
 Package: ntrdWisconsin
 Title: Neuropsychological Test Result Dashboards for ADRC Wisconsin
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: 
     person(
         given = "Ralph", 

@@ -170,7 +170,7 @@ test_that("pull_redcap_data works for UDS-4", {
     uds = 4
   )[
     as.Date(paste(VISITYR, VISITMO, VISITDAY, sep = "-")) <
-      as.Date("2026-07-17")
+      as.Date("2026-01-01")
   ]
 
   scramble_uds4 <- simulate_data_table(
