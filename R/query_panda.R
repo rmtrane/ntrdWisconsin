@@ -160,24 +160,24 @@ html_cat <- function(x, name) {
   )
 
   data.table::fcase(
-    name == "comment" & !is.na(x) & x != ""       , lapply(as.list(x), \(y) list(text = y))                                  ,
-    grepl("braak", name) & x == 0                 , list(negative_html)                                                      ,
-    grepl("braak", name) & x == 1                 , list(positive_html)                                                      ,
+    name == "comment" & !is.na(x) & x != ""                   , lapply(as.list(x), \(y) list(text = y))                                  ,
+    grepl("braak", name) & x == 0                             , list(negative_html)                                                      ,
+    grepl("braak", name) & x == 1                             , list(positive_html)                                                      ,
     # grepl("braak", name) & x == 0                 , list(list(icon = negative_html$icon, text = "Clearly negative (0)"))     ,
     # grepl("braak", name) & x == 1                 , list(list(icon = negative_html$icon, text = "Clearly negative (1)"))     ,
     # grepl("braak", name) & x == 2                 , list(list(text = "Ambiguous/Indeterminate"))                             ,
     # grepl("braak", name) & x == 3                 , list(positive_html)                                                      ,
-    grepl("nav4694_visual_rating", name) & x == 0 , list(negative_html)                                                      ,
-    grepl("nav4694_visual_rating", name) & x == 1 , list(positive_html)                                                      ,
-    grepl("pib_visual_ratings", name) & x == 0    , list(list(icon = negative_html$icon, text = "Clearly PiB negative (0)")) ,
-    grepl("pib_visual_ratings", name) & x == 1    , list(list(icon = negative_html$icon, text = "Clearly PiB negative (1)")) ,
-    grepl("pib_visual_ratings", name) & x == 2    , list(list(text = "Ambiguous/Indeterminate"))                             ,
-    grepl("pib_visual_ratings", name) & x == 3    , list(list(icon = positive_html$icon, text = "PiB+"))                     ,
-    x %in% c("Positive", "SAA+")                  , list(positive_html)                                                      ,
-    x %in% c("Negative", "SAA-")                  , list(negative_html)                                                      ,
-    x == "Indeterminate"                          , list(list(text = "Indeterminate"))                                       ,
-    x == "Unavailable"                            , list(list(text = "Unavailable"))                                         ,
-    x == "Likely Positive"                        , list(likely_positive_html)                                               ,
+    grepl("nav4694_visual_ratings", name) & x %in% c(0, 1, 2) , list(negative_html)                                                      ,
+    grepl("nav4694_visual_ratings", name) & x == 3            , list(positive_html)                                                      ,
+    grepl("pib_visual_ratings", name) & x == 0                , list(list(icon = negative_html$icon, text = "Clearly PiB negative (0)")) ,
+    grepl("pib_visual_ratings", name) & x == 1                , list(list(icon = negative_html$icon, text = "Clearly PiB negative (1)")) ,
+    grepl("pib_visual_ratings", name) & x == 2                , list(list(text = "Ambiguous/Indeterminate"))                             ,
+    grepl("pib_visual_ratings", name) & x == 3                , list(list(icon = positive_html$icon, text = "PiB+"))                     ,
+    x %in% c("Positive", "SAA+")                              , list(positive_html)                                                      ,
+    x %in% c("Negative", "SAA-")                              , list(negative_html)                                                      ,
+    x == "Indeterminate"                                      , list(list(text = "Indeterminate"))                                       ,
+    x == "Unavailable"                                        , list(list(text = "Unavailable"))                                         ,
+    x == "Likely Positive"                                    , list(likely_positive_html)                                               ,
     default = list(list())
   )
 

@@ -6,6 +6,8 @@ Bug fixes:
 
 * Fixes wrong visuals for Braak stages.
 
+* NAV4694 visual rating didn't always show in biomarker table.
+
 # ntrdWisconsin 0.1.2
 
 New features/improvements:
