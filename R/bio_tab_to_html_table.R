@@ -657,19 +657,9 @@ create_td <- function(
       shiny::tags$td(
         shiny::HTML("&mdash;"),
         class = class
-        # class = paste(
-        #   c(
-        #     if (last_row) "last-row",
-        #     if (first_row_in_group) "first-row-in-group",
-        #     if (last_row_in_group) "last-row-in-group"
-        #   ),
-        #   collapse = " "
-        # )
       )
     )
   }
-
-  print(y)
 
   return(
     shiny::tags$td(

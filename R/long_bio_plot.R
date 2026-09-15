@@ -1,5 +1,51 @@
+#' Longitudinal biomarker plot with reference-range bands and marginal density
+#'
+#' Builds the two panels for a single biomarker: a longitudinal scatter of
+#' observed values over time, shaded by clinical cut-point bands, and a
+#' marginal density curve for the same biomarker. The panels are returned
+#' unjoined so that several biomarkers can be stacked in a single
+#' [plotly::subplot()] call by the caller.
+#'
+#' @param dat A `data.table` of observations. Must contain columns `date`,
+#'   `age`, and the column named by `y_val`. Rows with a missing value in
+#'   `y_val` are dropped, but the x-axis range is computed before that filtering
+#'   so that panels for different biomarkers share a common time span.
+#' @param y_val Character. Name of the column in `dat` holding the biomarker
+#'   values to plot.
+#' @param dens A density estimate for `y_val`, as returned by [stats::density()]
+#'   (or any list with `x`, `y`, `n`, and `bw` elements). `n` and `bw` are
+#'   surfaced in the density panel's info tooltip.
+#' @param cuts A one-row-per-band `data.table` with columns `min_obs`,
+#'   `max_obs`, and `color`. Infinite bounds are clamped to the computed upper
+#'   plot limit. `color` values are expected to be `rgba()` strings containing
+#'   the literal token `alpha` in the alpha position, which is substituted to
+#'   vary opacity between the dimmed and highlighted states.
+#' @param height,width Numeric. Reserved for sizing; currently unused.
+#' @param new_id Character or `NULL`. Reserved for identifying the plot
+#'   instance; currently unused.
+#'
+#' @return A list of two `plotly` objects, `scatter` and `density`. These are
+#'   intended to be passed to [plotly::subplot()] rather than printed directly.
+#'
+#' @details
+#' The scatter panel carries three named trace groups that downstream code
+#' depends on: `band<i>` for the shaded cut-point regions, `obs_outer` for the
+#' invisible trace carrying the wider (10%) error bars, and `obs` for the
+#' visible markers and their 5% error bars. The JavaScript hover callback
+#' locates traces by these names, so renaming them will silently break
+#' highlighting.
+#'
+#' Layout properties that are global to a figure - notably `shapes`,
+#' `annotations`, and any render hook - do not survive [plotly::subplot()]
+#' merging and must be applied to the combined figure by the caller. The
+#' per-panel `shapes` and `annotations` set here on the density panel are an
+#' exception only because their axis references (`yref = "y"`) are remapped
+#' during the merge.
+#'
+#' @seealso [add_row_titles()] for adding per-row titles to the combined figure.
+#' @keywords internal
 long_bio_plot <- function(
-  dat = tmp,
+  dat,
   y_val = "csf_ratio_roche_ptau181_ab42_local_raw",
   dens = all_densities$csf_ratio_roche_ptau181_ab42_local_raw,
   cuts = all_cuts[[1]][name == "csf_ratio_roche_ptau181_ab42_local"],
@@ -7,6 +53,8 @@ long_bio_plot <- function(
   width = 400,
   new_id = NULL
 ) {
+  age <- all_cuts <- all_densities <- hover_text <- max_obs <- min_obs <- name <- obs <- percentiles <- obs_where <- x <- y <- NULL
+
   if (is.null(dat) || nrow(dat) == 0) {
     return()
   }
@@ -266,6 +314,34 @@ long_bio_plot <- function(
   return(list(scatter = p_scatter, density = p_density))
 }
 
+#' Add per-row titles to a stacked subplot figure
+#'
+#' A plotly figure has a single `layout.title`, so stacking several panels with
+#' [plotly::subplot()] leaves only one title. This adds one annotation per row
+#' instead, positioned in paper coordinates derived from the built figure's
+#' axis domains so that the number of rows need not be known in advance.
+#'
+#' @param fig A `plotly` object, typically the result of [plotly::subplot()].
+#' @param titles Character vector of titles, one per row, in panel order.
+#'   May contain the pseudo-HTML subset plotly supports (`<b>`, `<i>`, `<sub>`,
+#'   `<sup>`, `<br>`, `<span style>`); HTML entities are not decoded, so use
+#'   literal or `\\u`-escaped unicode for special characters.
+#' @param font_size Numeric. Title font size in pixels.
+#'
+#' @return The input figure with the title annotations appended.
+#'
+#' @details
+#' Rows are discovered by locating the trace named `obs` in each panel and
+#' reading the upper bound of its y-axis domain, so `fig` must have been built
+#' from panels produced by [long_bio_plot()]. Existing annotations are
+#' preserved by appending rather than replacing.
+#'
+#' Titles are shifted left of the plotting area to sit outside the y-axis tick
+#' labels; the caller should allow a correspondingly large left margin on the
+#' combined figure, and enough inter-row margin for the titles to clear the
+#' panel above.
+#'
+#' @keywords internal
 add_row_titles <- function(fig, titles, font_size = 13) {
   b <- plotly::plotly_build(fig)
 
@@ -376,3 +452,6 @@ on_render <- function(x, jsCode, data = NULL) {
   )
   x
 }
+
+
+`%||%` <- function(x, y) if (is.null(x)) y else x

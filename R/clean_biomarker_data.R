@@ -133,7 +133,9 @@ clean_biomarker_data <- function(
   }
 
   if (table_name == "plasma") {
-    as_df$hdx_ptau217_local_raw <- as_df$plasma_ptau217_hdx
+    if ("status_plasma_hdx_ptau_local" %in% names(as_df)) {
+      as_df$hdx_ptau217_local_raw <- as_df$plasma_ptau217_hdx
+    }
 
     renaming_vec <- c(
       # old = new
@@ -166,6 +168,8 @@ clean_biomarker_data <- function(
       "nav4694_visual_ratings" = "nav4694_visual_ratings_cat",
       "pib_visual_ratings_20180126" = "pib_visual_ratings_20180126_cat"
     )
+
+    # as_df[,]
   }
 
   data.table::setnames(

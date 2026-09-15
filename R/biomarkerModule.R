@@ -1,9 +1,13 @@
 biomarker_ui <- function(id = "CSF") {
-  if (id == "Visual Ratings") {
-    return(shiny::uiOutput(shiny::NS(id, "table")))
+  if (grepl("Visual", id)) {
+    return(bslib::navset_card_tab(
+      title = id,
+      shiny::uiOutput(shiny::NS(id, "table"))
+    ))
   }
 
-  bslib::navset_tab(
+  bslib::navset_card_tab(
+    title = shiny::h3(id),
     bslib::nav_panel(
       title = "Table",
       shiny::uiOutput(shiny::NS(id, "table"))
@@ -23,7 +27,7 @@ biomarker_server <- function(
   all_values = NULL,
   api_token
 ) {
-  enumber <- NULL
+  enumber <- y <- name <- NULL
 
   shiny::moduleServer(id, function(input, output, session) {
     if (is.null(batch_loading)) {
@@ -187,8 +191,8 @@ biomarker_server <- function(
           ),
           y_lab = c(
             # CSF
-            "Fujirebio Lumipulse Aß<sub>42</sub>/Aß<sub>40</sub> (FDA)",
-            "Roche pTau181/Aß<sub>42</sub> (local)",
+            "Fujirebio Lumipulse A\u{03b2}<sub>42</sub>/A\u{03b2}<sub>40</sub> (FDA)",
+            "Roche pTau181/A\u{03b2}<sub>42</sub> (local)",
             # Plasma
             "Quanterix HDX pTau217 (Ashton et al.)",
             "Fujirebio Lumipulse pTau217 (local)"
@@ -215,13 +219,16 @@ biomarker_server <- function(
           )
         }
 
-        if (
-          nrow(bio_dat_res[, intersect(
+        n_obs <- bio_dat_res[
+          enumber == ptid(),
+          sum(unlist(lapply(.SD, \(x) sum(!is.na(x))))),
+          .SDcols = intersect(
             plot_vars_labs_cutnames$y,
             names(bio_dat_res)
-          )]) ==
-            0
-        ) {
+          )
+        ]
+
+        if (n_obs == 0) {
           return(
             data.table::data.table(
               name = "No values found",
@@ -298,13 +305,13 @@ biomarker_app <- function(
       choices = ptid
     ),
     shiny::tags$hr(),
-    shiny::tags$h4("CSF"),
+    # shiny::tags$h4("CSF"),
     biomarker_ui("CSF"),
     shiny::tags$hr(),
-    shiny::tags$h4("Plasma"),
+    # shiny::tags$h4("Plasma"),
     biomarker_ui("Plasma"),
     shiny::tags$hr(),
-    shiny::tags$h4("Visual ratings"),
+    # shiny::tags$h4("Visual ratings"),
     biomarker_ui("Visual Ratings")
   )
 
