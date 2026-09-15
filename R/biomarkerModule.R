@@ -1,5 +1,18 @@
 biomarker_ui <- function(id = "CSF") {
-  shiny::uiOutput(shiny::NS(id, "table"))
+  if (id == "Visual Ratings") {
+    return(shiny::uiOutput(shiny::NS(id, "table")))
+  }
+
+  bslib::navset_tab(
+    bslib::nav_panel(
+      title = "Table",
+      shiny::uiOutput(shiny::NS(id, "table"))
+    ),
+    bslib::nav_panel(
+      title = "Plot",
+      shiny::uiOutput(shiny::NS(id, "long_plot"))
+    )
+  )
 }
 
 biomarker_server <- function(
@@ -79,6 +92,7 @@ biomarker_server <- function(
 
     shiny::observe({
       # If ExtendedTask successfully ran...
+
       if (bio_dat$status() == "success") {
         bio_dat_res <- bio_dat$result()
 
@@ -126,7 +140,7 @@ biomarker_server <- function(
       gt::cols_label(x = "") |>
       gt::opt_table_lines("none")
 
-    output$table <- shiny::renderUI({
+    empty_gt <- output$table <- shiny::renderUI({
       if (bio_dat$status() == "running") {
         return(loading_gt)
       }
@@ -151,6 +165,105 @@ biomarker_server <- function(
         tmp
       } else {
         cli::cli_inform("{bio_dat$status()}")
+      }
+    })
+
+    output$long_plot <- shiny::renderUI({
+      if (bio_dat$status() == "running") {
+        return(loading_gt)
+      }
+
+      bio_dat_res <- bio_dat$result()
+
+      if (tolower(ptid()) %in% names(bio_tables) || isTRUE(batch_loading)) {
+        plot_vars_labs_cutnames <- data.table::data.table(
+          y = c(
+            # CSF
+            "csf_ratio_lumi_ab42_ab40_fda_raw",
+            "csf_ratio_roche_ptau181_ab42_local_raw",
+            # Plasma
+            "hdx_ptau217_ashton_raw",
+            "lumi_ptau217_local_raw"
+          ),
+          y_lab = c(
+            # CSF
+            "Fujirebio Lumipulse Aß<sub>42</sub>/Aß<sub>40</sub> (FDA)",
+            "Roche pTau181/Aß<sub>42</sub> (local)",
+            # Plasma
+            "Quanterix HDX pTau217 (Ashton et al.)",
+            "Fujirebio Lumipulse pTau217 (local)"
+          ),
+          cut_name = c(
+            # CSF
+            "csf_ratio_lumi_ab42_ab40_fda",
+            "csf_ratio_roche_ptau181_ab42_local",
+            # Plasma
+            "hdx_ptau217_ashton",
+            "lumi_ptau217_local"
+          )
+        )
+
+        if (all(!plot_vars_labs_cutnames$y %in% names(bio_dat_res))) {
+          return(
+            data.table::data.table(
+              name = "No values found",
+              name_label = "No values found"
+            ) |>
+              bio_tab_to_html_table(
+                tab_header = ""
+              )
+          )
+        }
+
+        if (
+          nrow(bio_dat_res[, intersect(
+            plot_vars_labs_cutnames$y,
+            names(bio_dat_res)
+          )]) ==
+            0
+        ) {
+          return(
+            data.table::data.table(
+              name = "No values found",
+              name_label = "No values found"
+            ) |>
+              bio_tab_to_html_table(
+                tab_header = ""
+              )
+          )
+        }
+
+        long_bio_plots <- purrr::pmap(
+          plot_vars_labs_cutnames[y %in% names(bio_dat_res)],
+          \(y, y_lab, cut_name) {
+            long_bio_plot(
+              dat = bio_dat_res[enumber == ptid()],
+              y_val = y,
+              dens = all_densities()[[y]],
+              cuts = all_cuts()[[1]][name == cut_name],
+              new_id = y
+            )
+          }
+        )
+
+        p <- plotly::subplot(
+          unlist(long_bio_plots, F),
+          nrows = length(long_bio_plots),
+          widths = c(0.85, 0.15),
+          shareY = T,
+          shareX = T,
+          margin = c(0, 0, 0.075, 0.075)
+        ) |>
+          add_row_titles(
+            titles = plot_vars_labs_cutnames[y %in% names(bio_dat_res)]$y_lab
+          ) |>
+          on_render(long_bio_plot_js)
+
+        p$elementId <- id
+
+        p
+      } else {
+        cli::cli_inform("{bio_dat$status()")
       }
     })
   })

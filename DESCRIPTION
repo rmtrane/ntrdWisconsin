@@ -59,6 +59,7 @@ Collate:
     'data_source_server.R'
     'data_source_ui.R'
     'extensionModule.R'
+    'long_bio_plot.R'
     'nacc_to_wadrc_uds2.R'
     'nacc_to_wadrc_uds3.R'
     'nacc_to_wadrc_uds4.R'
