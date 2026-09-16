@@ -1,13 +1,38 @@
-biomarker_ui <- function(id = "CSF") {
+biomarker_ui <- function(
+  id = "CSF",
+  title = shiny::tags$span(
+    style = "color: var(--bs-body-color); font-weight: 600; font-size: 1rem; line-height: 1.3333;",
+    class = "nav-link disabled nav-title",
+    # style = "display: flex; align-items: center; gap: 8px; margin-left: 12px; margin-top: 24px;",
+    "CSF",
+    shiny::tags$a(
+      href = "https://panda.medicine.wisc.edu/system/datadictionary2s/1368/original/report_biofluid_status_2026-02.pdf",
+      target = "_blank",
+      shiny::span(
+        shiny::icon("external-link-alt"),
+        `data-bs-toggle` = "tooltip",
+        `data-placement` = "top",
+        title = "Opens documentation in a new tab"
+      )
+    )
+  )
+) {
   if (grepl("Visual", id)) {
-    return(bslib::navset_card_tab(
-      title = id,
-      shiny::uiOutput(shiny::NS(id, "table"))
+    return(bslib::navset_tab(
+      bslib::nav_item(title),
+      header = shiny::uiOutput(shiny::NS(id, "table"))
     ))
   }
 
-  bslib::navset_card_tab(
-    title = shiny::h3(id),
+  bslib::navset_tab(
+    # title = tags$span(id, class = "h5 mb-0 align-self-center"),
+    bslib::nav_item(
+      #tags$span(
+      title #,
+      # class = "h5 mb-0 pe-3 d-flex align-items-center h-100"
+      #)
+    ),
+    bslib::nav_spacer(),
     bslib::nav_panel(
       title = "Table",
       shiny::uiOutput(shiny::NS(id, "table"))
