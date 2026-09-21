@@ -69,6 +69,7 @@ Collate:
     'readOldSavedFile.R'
     'respval_behavioral_data.R'
     'simulate_data_table.R'
+    'summarize_braak.R'
     'updates.R'
     'wadrc_data_prep.R'
     'wadrc_uds2_redcap_fields.R'

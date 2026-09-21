@@ -12,6 +12,8 @@
 #' @param print_x For debugging
 #' @param tab_id ID for the table, used to create unique cell IDs.
 #' @param tab_header Header label for the table.
+#' @param section_pattern Pattern to match on for defining a section. Default: `"^braak`
+#' @param section_label Label to show above section. Default: `"Braak Rating"`
 #'
 #' @returns
 #' A `shiny::tagList` object representing the HTML table. Will error if `tab_for_gt` is not
@@ -27,7 +29,9 @@ bio_tab_to_html_table <- function(
   www_path = system.file("www", package = "ntrdWisconsin"),
   print_x = FALSE,
   tab_id = "csf",
-  tab_header = "method"
+  tab_header = "method",
+  section_pattern = "^braak",
+  section_label = "Tau PET NFT Rating"
 ) {
   ## To avoid notes in R CMD check
   method <- NULL
@@ -323,14 +327,38 @@ bio_tab_to_html_table <- function(
               print(x)
             }
 
-            # if (x == 8) {
-            #   browser()
-            # }
-
             nam <- tab_for_gt$name[x]
             nam_lab <- tab_for_gt$name_label[x]
             tab <- tab_for_gt$table[x]
             met <- tab_for_gt$method[x]
+
+            ## Does this row belong to the indented section (e.g. Braak regions)?
+            in_section <- grepl(section_pattern, nam, ignore.case = TRUE)
+
+            ## Is it the first row of that section within the current method/table block?
+            starts_section <- in_section &&
+              (x == 1 ||
+                !grepl(
+                  section_pattern,
+                  tab_for_gt$name[x - 1],
+                  ignore.case = TRUE
+                ) ||
+                !identical(tab_for_gt$table[x - 1], tab) ||
+                !identical(tab_for_gt$method[x - 1], met))
+
+            section_header <- if (starts_section) {
+              list(shiny::tags$tr(
+                class = "section-header",
+                shiny::tags$td(), # method
+                shiny::tags$td(), # table
+                shiny::tags$td(
+                  style = "text-align: left;",
+                  section_label,
+                  colspan = max(ncol(tab_for_gt) - 3, 1)
+                ),
+                shiny::tags$td() # append
+              ))
+            }
 
             ## Get vector of visits that are "true visits" for this method.
             ## This is based on valid age, and chosen among columns named
@@ -405,8 +433,6 @@ bio_tab_to_html_table <- function(
                 )
               ]
 
-              # browser()
-
               ## Is this the first row in a group of rows?
               first_row_in_group <- (nam == "Age") ||
                 (x > 2 && tab != tab_for_gt$table[x - 2])
@@ -424,14 +450,9 @@ bio_tab_to_html_table <- function(
                   ),
                   collapse = " "
                 ),
-                # class = if (last_row) "last-row",
                 unname(purrr::imap(
                   obs,
                   \(y, idy) {
-                    # if (x == 8 & idy == "2025-09-08") {
-                    #   browser()
-                    # }
-
                     if (!is.null(tab) && tab %in% names(densities)) {
                       cur_dens <- densities[[tab]][[paste(
                         nam,
@@ -444,13 +465,8 @@ bio_tab_to_html_table <- function(
 
                     if (!is.null(tab) && tab %in% names(cuts)) {
                       cur_cut <- cuts[[tab]][name == nam]
-                      # [[paste(
-                      #   nam,
-                      #   "raw",
-                      #   sep = "_"
-                      # )]]
                     } else {
-                      cur_cut <- cuts[name == nam] # [[paste(nam, "raw", sep = "_")]]
+                      cur_cut <- cuts[name == nam]
                     }
 
                     if (idy == "name") {
@@ -474,11 +490,9 @@ bio_tab_to_html_table <- function(
                         shiny::h5(nam, style = "font-weight: bold;"),
                         shiny::p(tab)
                       ),
-                      # fmt: skip
-                      cur_dens =  cur_dens, # if (tab %in% names(densities)) densities[[tab]][[paste(nam, "raw", sep = "_")]],
-                      cur_cut = cur_cut # if (tab %in% names(cuts)) {
-                      #   cuts[[tab]][name == nam, ]
-                      # }
+                      cur_dens = cur_dens,
+                      cur_cut = cur_cut,
+                      in_section = in_section
                     )
                   }
                 ))
@@ -487,6 +501,7 @@ bio_tab_to_html_table <- function(
 
             shiny::tagList(
               subtable_header,
+              section_header,
               cur_tr
             )
           })
@@ -533,12 +548,9 @@ create_td <- function(
     "raw",
     sep = "_"
   )]],
-  cur_cut = all_cuts[[tab]][name == nam, ]
+  cur_cut = all_cuts[[tab]][name == nam, ],
+  in_section = FALSE
 ) {
-  # if (cell_id == "4_2009-12-02") {
-  #   browser()
-  # }
-
   # To avoid notes in R CMD check
   densities <- NULL
   all_cuts <- NULL
@@ -582,12 +594,16 @@ create_td <- function(
   }
 
   if (idy %in% c("name", "table", "method", "append")) {
+    in_section_name <- isTRUE(in_section) && idy == "name"
+    cls <- c(class, if (in_section_name) "indented-cell")
+
     return(
       shiny::tags$td(
         y,
-        class = class,
-        style = paste(
-          "text-align: left;"
+        class = if (length(cls)) paste(cls, collapse = " "),
+        style = paste0(
+          "text-align: left;",
+          if (in_section_name) " padding-left: 1.5em; font-style: italic;"
         )
       )
     )
@@ -606,8 +622,6 @@ create_td <- function(
           class = "info-icon",
           style = "color: white; background-color: grey;",
           shiny::icon("info-sign", lib = "glyphicon"),
-          # `data-toggle` = "tooltip",
-          # `data-html` = 'true',
           `data-bs-toggle` = "tooltip",
           `data-bs-container` = "body",
           `data-bs-placement` = "right",
@@ -621,25 +635,7 @@ create_td <- function(
           )),
           onclick = paste0("window.open('", y[[1]]$link, "', '_blank')")
         )
-        # shiny::tags$span(
-        #   class = "plot-icon",
-        #   shiny::icon("info-circle"),
-        #   `data-tooltip` = shiny::HTML(paste(
-        #     y[[1]]$description,
-        #     "Click for reference.",
-        #     sep = "<br>"
-        #   )),
-        #   `data-html` = 'true',
-        #   onclick = paste0("window.open('", y[[1]]$link, "', '_blank')")
-        # )
       )
-      # shiny::HTML(
-      #   paste0(
-      #     "<td><span class='plot-icon' data-tooltip='",
-      #     y,
-      #     "'><i class='fas fa-circle-info' role='presentation' aria-label='circle-info icon'></i></span></td>'"
-      #   )
-      # )
     )
   }
 
@@ -719,10 +715,6 @@ cell_content <- function(
       ))
     ),
     if (!is.null(cell$raw) && !is.na(cell$raw)) {
-      # if (cell_id == "3_2023-05-03") {
-      #   browser()
-      # }
-
       shiny::tags$span(
         class = "flex-cell-right plot-icon",
         shiny::icon("chart-line"),
