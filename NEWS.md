@@ -1,3 +1,11 @@
+# ntrdWisconsin 0.1.4
+
+Changes:
+
+* Remove some biomarkers we no longer wish to include
+
+* New longitudinal plot visualizing raw biomarker numbers over time
+
 # ntrdWisconsin 0.1.3
 
 Bug fixes:

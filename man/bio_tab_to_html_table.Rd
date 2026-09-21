@@ -13,7 +13,7 @@ bio_tab_to_html_table(
   tab_id = "csf",
   tab_header = "method",
   section_pattern = "^braak",
-  section_label = "Braak Rating"
+  section_label = "Tau PET NFT Rating"
 )
 }
 \arguments{
