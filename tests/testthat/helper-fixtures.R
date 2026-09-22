@@ -259,3 +259,64 @@ make_prepped_pull <- function() {
     REY5REC = c(9, 9, 5)
   )
 }
+
+
+# A toy "density": y = x on the grid x = 0, 0.1, ..., 1. It doesn't integrate to
+# 1, but density_plot() never assumes it does, and y = x makes every derived
+# number easy to check by hand (inserted-cut y values, the percentile sum).
+make_density_fixture <- function() {
+  x <- seq(0, 1, by = 0.1)
+  list(x = x, y = x, n = 100, bw = 0.05)
+}
+
+# Three regions with cuts at 0.45 and 0.75, both OFF the 0.1 grid so the
+# cut-insertion branch runs. Colours use the "alpha" placeholder that
+# density_plot() replaces with 0.9 (highlighted) or 0.4 (not).
+make_density_cuts <- function() {
+  data.table::data.table(
+    color = c(
+      "rgba(0,128,0,alpha)",
+      "rgba(255,165,0,alpha)",
+      "rgba(255,0,0,alpha)"
+    ),
+    min_obs = c(0, 0.45, 0.75),
+    max_obs = c(0.45, 0.75, 1)
+  )
+}
+
+
+# The list-valued date cells bio_tab_to_html_table() expects are produced by
+# bio_tab_for_gt() (R/query_panda.R). Rather than hand-build that structure,
+# these run the real pipeline on the item 10 fixtures:
+#   make_biomarker_*() -> clean_biomarker_data() -> bio_tab_for_gt()
+
+# One CSF visit (2021-05-01, age 70) with one biomarker that has a raw value
+# (csf_ratio_lumi_ab42_ab40_fda = 0.052), so its cell gets a density plot.
+make_bio_tab_csf <- function() {
+  bio_tab_for_gt(clean_biomarker_data(make_biomarker_csf(), "csf", NULL))
+}
+
+# Three visual-ratings visits with Braak rows (categorical only, no raw values),
+# for the section-header logic.
+make_bio_tab_visual <- function() {
+  bio_tab_for_gt(clean_biomarker_data(
+    make_biomarker_visual_ratings(),
+    "visual_ratings",
+    NULL
+  ))
+}
+
+# Flat densities list keyed "<name>_raw", as looked up when the table name
+# isn't itself a key of `densities`. Reuses the item 11 toy density.
+make_bio_densities <- function() {
+  list(csf_ratio_lumi_ab42_ab40_fda_raw = make_density_fixture())
+}
+
+# Cuts as a single data.table with a `name` column (the shape biomarkerModule
+# passes as all_cuts()[[1]]). Reuses the item 11 regions.
+make_bio_cuts <- function() {
+  cbind(
+    data.table::data.table(name = "csf_ratio_lumi_ab42_ab40_fda"),
+    make_density_cuts()
+  )
+}

@@ -75,10 +75,9 @@ density_plot <- function(
   }
 
   trace_colors <- cuts$color
-  cuts <- cuts[, list(cuts = unique(c(min_obs, max_obs)))]$cuts
 
   obs_where <- #tryCatch(
-    findInterval(obs, vec = cuts) #,
+    findInterval(obs, vec = cut_values) #,
   #   error = function(e) {
   #     browser()
   #   }
@@ -112,11 +111,15 @@ density_plot <- function(
     # names(p$x$layoutAttrs) <- new_id
   }
 
-  for (i in seq_along(cuts)[-1]) {
+  for (i in seq_along(cut_values)[-1]) {
     p <- p |>
       plotly::add_trace(
-        x = density_df$x[density_df$x <= cuts[i] & density_df$x >= cuts[i - 1]],
-        y = density_df$y[density_df$x <= cuts[i] & density_df$x >= cuts[i - 1]],
+        x = density_df$x[
+          density_df$x <= cut_values[i] & density_df$x >= cut_values[i - 1]
+        ],
+        y = density_df$y[
+          density_df$x <= cut_values[i] & density_df$x >= cut_values[i - 1]
+        ],
         fill = "tozeroy",
         fillcolor = trace_colors[i - 1],
         line = list(
@@ -181,15 +184,17 @@ density_plot <- function(
         range = c(-0.01, 1.01) * max(density_df$x),
         tickfont = list(size = 10)
       ),
-      shapes = list(
-        type = "line",
-        x0 = cut,
-        x1 = cut,
-        y0 = 0,
-        y1 = 1,
-        yref = "paper",
-        line = list(color = "grey45", dash = "dot")
-      ),
+      shapes = lapply(cut_values[-c(1, length(cut_values))], \(x) {
+        list(
+          type = "line",
+          x0 = x,
+          x1 = x,
+          y0 = 0,
+          y1 = 1,
+          yref = "paper",
+          line = list(color = "grey45", dash = "dot")
+        )
+      }),
       showlegend = F
     ) |>
     plotly::config(
