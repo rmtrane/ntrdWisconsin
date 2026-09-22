@@ -89,6 +89,7 @@ simulate_data_table <- function(
   if (!is.null(date_col) && !is.null(date_parts)) {
     cli::cli_abort("Supply only one of `date_col` or `date_parts`.")
   }
+
   if (!is.null(date_parts) && length(date_parts) != 3L) {
     cli::cli_abort(
       "`date_parts` must name the year, month, and day columns (length 3)."
