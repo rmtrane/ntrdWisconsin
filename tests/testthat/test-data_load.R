@@ -178,7 +178,8 @@ test_that("pull_redcap_data works for UDS-4", {
     id_col = "NACCID",
     constant_cols = c("SEX", "EDUC", "RACE", "HANDED", "BIRTHYR", "BIRTHMO"),
     date_parts = c("VISITYR", "VISITMO", "VISITDAY"),
-    seed = 1
+    seed = 1,
+    n_ids = 20
   )
 
   expect_snapshot(scramble_uds4)

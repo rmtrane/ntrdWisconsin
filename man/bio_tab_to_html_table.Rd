@@ -11,7 +11,9 @@ bio_tab_to_html_table(
   www_path = system.file("www", package = "ntrdWisconsin"),
   print_x = FALSE,
   tab_id = "csf",
-  tab_header = "method"
+  tab_header = "method",
+  section_pattern = "^braak",
+  section_label = "Tau PET NFT Rating"
 )
 }
 \arguments{
@@ -28,6 +30,10 @@ bio_tab_to_html_table(
 \item{tab_id}{ID for the table, used to create unique cell IDs.}
 
 \item{tab_header}{Header label for the table.}
+
+\item{section_pattern}{Pattern to match on for defining a section. Default: \verb{"^braak}}
+
+\item{section_label}{Label to show above section. Default: \code{"Braak Rating"}}
 }
 \value{
 A \code{shiny::tagList} object representing the HTML table. Will error if \code{tab_for_gt} is not

@@ -22,6 +22,7 @@ clean_biomarker_data <- function(
 
   name <- NULL
   analyte <- NULL
+  braak_1 <- braak_2 <- braak_3 <- braak_4 <- braak_5 <- braak_6 <- braak_positive_cat <- NULL
 
   # fmt: skip
   levs <- list(
@@ -133,7 +134,9 @@ clean_biomarker_data <- function(
   }
 
   if (table_name == "plasma") {
-    as_df$hdx_ptau217_local_raw <- as_df$plasma_ptau217_hdx
+    if ("status_plasma_hdx_ptau_local" %in% names(as_df)) {
+      as_df$hdx_ptau217_local_raw <- as_df$plasma_ptau217_hdx
+    }
 
     renaming_vec <- c(
       # old = new
@@ -156,7 +159,7 @@ clean_biomarker_data <- function(
     renaming_vec <- c(
       "petscan_date" = "date",
       "age_at_appointment" = "age",
-      "comment" = "comment_cat",
+      "comment" = "braak_comment_cat",
       "braak_1" = "braak_1_cat",
       "braak_2" = "braak_2_cat",
       "braak_3" = "braak_3_cat",
@@ -166,6 +169,17 @@ clean_biomarker_data <- function(
       "nav4694_visual_ratings" = "nav4694_visual_ratings_cat",
       "pib_visual_ratings_20180126" = "pib_visual_ratings_20180126_cat"
     )
+
+    as_df[,
+      braak_positive_cat := summarize_braak(
+        braak_1,
+        braak_2,
+        braak_3,
+        braak_4,
+        braak_5,
+        braak_6
+      )
+    ]
   }
 
   data.table::setnames(

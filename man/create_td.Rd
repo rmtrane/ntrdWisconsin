@@ -15,7 +15,8 @@ create_td(
   next_col,
   plot_title,
   cur_dens = densities[[tab]][[paste(nam, "raw", sep = "_")]],
-  cur_cut = all_cuts[[tab]][name == nam, ]
+  cur_cut = all_cuts[[tab]][name == nam, ],
+  in_section = FALSE
 )
 }
 \arguments{

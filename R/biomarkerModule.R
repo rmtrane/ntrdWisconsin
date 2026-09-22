@@ -1,5 +1,47 @@
-biomarker_ui <- function(id = "CSF") {
-  shiny::uiOutput(shiny::NS(id, "table"))
+biomarker_ui <- function(
+  id = "CSF",
+  title = shiny::tags$span(
+    style = "color: var(--bs-body-color); font-weight: 600; font-size: 1rem; line-height: 1.3333;",
+    class = "nav-link disabled nav-title",
+    # style = "display: flex; align-items: center; gap: 8px; margin-left: 12px; margin-top: 24px;",
+    "CSF",
+    shiny::tags$a(
+      href = "https://panda.medicine.wisc.edu/system/datadictionary2s/1368/original/report_biofluid_status_2026-02.pdf",
+      target = "_blank",
+      shiny::span(
+        shiny::icon("external-link-alt"),
+        `data-bs-toggle` = "tooltip",
+        `data-placement` = "top",
+        title = "Opens documentation in a new tab"
+      )
+    )
+  )
+) {
+  if (grepl("Visual", id)) {
+    return(bslib::navset_tab(
+      bslib::nav_item(title),
+      header = shiny::uiOutput(shiny::NS(id, "table"))
+    ))
+  }
+
+  bslib::navset_tab(
+    # title = tags$span(id, class = "h5 mb-0 align-self-center"),
+    bslib::nav_item(
+      #tags$span(
+      title #,
+      # class = "h5 mb-0 pe-3 d-flex align-items-center h-100"
+      #)
+    ),
+    bslib::nav_spacer(),
+    bslib::nav_panel(
+      title = "Table",
+      shiny::uiOutput(shiny::NS(id, "table"))
+    ),
+    bslib::nav_panel(
+      title = "Plot",
+      shiny::uiOutput(shiny::NS(id, "long_plot"))
+    )
+  )
 }
 
 biomarker_server <- function(
@@ -10,7 +52,7 @@ biomarker_server <- function(
   all_values = NULL,
   api_token
 ) {
-  enumber <- NULL
+  enumber <- y <- name <- NULL
 
   shiny::moduleServer(id, function(input, output, session) {
     if (is.null(batch_loading)) {
@@ -79,6 +121,7 @@ biomarker_server <- function(
 
     shiny::observe({
       # If ExtendedTask successfully ran...
+
       if (bio_dat$status() == "success") {
         bio_dat_res <- bio_dat$result()
 
@@ -126,7 +169,7 @@ biomarker_server <- function(
       gt::cols_label(x = "") |>
       gt::opt_table_lines("none")
 
-    output$table <- shiny::renderUI({
+    empty_gt <- output$table <- shiny::renderUI({
       if (bio_dat$status() == "running") {
         return(loading_gt)
       }
@@ -151,6 +194,108 @@ biomarker_server <- function(
         tmp
       } else {
         cli::cli_inform("{bio_dat$status()}")
+      }
+    })
+
+    output$long_plot <- shiny::renderUI({
+      if (bio_dat$status() == "running") {
+        return(loading_gt)
+      }
+
+      bio_dat_res <- bio_dat$result()
+
+      if (tolower(ptid()) %in% names(bio_tables) || isTRUE(batch_loading)) {
+        plot_vars_labs_cutnames <- data.table::data.table(
+          y = c(
+            # CSF
+            "csf_ratio_lumi_ab42_ab40_fda_raw",
+            "csf_ratio_roche_ptau181_ab42_local_raw",
+            # Plasma
+            "hdx_ptau217_ashton_raw",
+            "lumi_ptau217_local_raw"
+          ),
+          y_lab = c(
+            # CSF
+            "Fujirebio Lumipulse A\u{03b2}<sub>42</sub>/A\u{03b2}<sub>40</sub> (FDA)",
+            "Roche pTau181/A\u{03b2}<sub>42</sub> (local)",
+            # Plasma
+            "Quanterix HDX pTau217 (Ashton et al.)",
+            "Fujirebio Lumipulse pTau217 (local)"
+          ),
+          cut_name = c(
+            # CSF
+            "csf_ratio_lumi_ab42_ab40_fda",
+            "csf_ratio_roche_ptau181_ab42_local",
+            # Plasma
+            "hdx_ptau217_ashton",
+            "lumi_ptau217_local"
+          )
+        )
+
+        if (all(!plot_vars_labs_cutnames$y %in% names(bio_dat_res))) {
+          return(
+            data.table::data.table(
+              name = "No values found",
+              name_label = "No values found"
+            ) |>
+              bio_tab_to_html_table(
+                tab_header = ""
+              )
+          )
+        }
+
+        n_obs <- bio_dat_res[
+          enumber == ptid(),
+          sum(unlist(lapply(.SD, \(x) sum(!is.na(x))))),
+          .SDcols = intersect(
+            plot_vars_labs_cutnames$y,
+            names(bio_dat_res)
+          )
+        ]
+
+        if (n_obs == 0) {
+          return(
+            data.table::data.table(
+              name = "No values found",
+              name_label = "No values found"
+            ) |>
+              bio_tab_to_html_table(
+                tab_header = ""
+              )
+          )
+        }
+
+        long_bio_plots <- purrr::pmap(
+          plot_vars_labs_cutnames[y %in% names(bio_dat_res)],
+          \(y, y_lab, cut_name) {
+            long_bio_plot(
+              dat = bio_dat_res[enumber == ptid()],
+              y_val = y,
+              dens = all_densities()[[y]],
+              cuts = all_cuts()[[1]][name == cut_name],
+              new_id = y
+            )
+          }
+        )
+
+        p <- plotly::subplot(
+          unlist(long_bio_plots, F),
+          nrows = length(long_bio_plots),
+          widths = c(0.85, 0.15),
+          shareY = T,
+          shareX = T,
+          margin = c(0, 0, 0.075, 0.075)
+        ) |>
+          add_row_titles(
+            titles = plot_vars_labs_cutnames[y %in% names(bio_dat_res)]$y_lab
+          ) |>
+          on_render(long_bio_plot_js)
+
+        p$elementId <- id
+
+        p
+      } else {
+        cli::cli_inform("{bio_dat$status()")
       }
     })
   })
@@ -185,13 +330,13 @@ biomarker_app <- function(
       choices = ptid
     ),
     shiny::tags$hr(),
-    shiny::tags$h4("CSF"),
+    # shiny::tags$h4("CSF"),
     biomarker_ui("CSF"),
     shiny::tags$hr(),
-    shiny::tags$h4("Plasma"),
+    # shiny::tags$h4("Plasma"),
     biomarker_ui("Plasma"),
     shiny::tags$hr(),
-    shiny::tags$h4("Visual ratings"),
+    # shiny::tags$h4("Visual ratings"),
     biomarker_ui("Visual Ratings")
   )
 

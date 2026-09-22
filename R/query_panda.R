@@ -103,7 +103,8 @@ bio_tab_for_gt <- function(
         name == "braak_4"                            , "Stage IV"                                      ,
         name == "braak_5"                            , "Stage V"                                       ,
         name == "braak_6"                            , "Stage VI"                                      ,
-        name == "comment"                            , "Braak Comment"                                 ,
+        name == "braak_positive"                     , "Tau PET Result"                                ,
+        name == "braak_comment"                      , "Comment"                                       ,
         name == "nav4694_visual_ratings"             , "NAV4694 Scan Rating"                           ,
         name == "pib_visual_ratings_20180126"        , "PiB Visual Rating"                             ,
         default = name
@@ -160,56 +161,27 @@ html_cat <- function(x, name) {
   )
 
   data.table::fcase(
-    name == "comment" & !is.na(x) & x != ""                   , lapply(as.list(x), \(y) list(text = y))                                  ,
-    grepl("braak", name) & x == 0                             , list(negative_html)                                                      ,
-    grepl("braak", name) & x == 1                             , list(positive_html)                                                      ,
+    name == "braak_positive" | (name == "braak_comment" & !is.na(x) & x != "") , lapply(as.list(x), \(y) list(text = y))                                  ,
+    # name == "braak_positive"                                  , list(list(text = x))                                                     ,
+    grepl("braak", name) & x == 0                                              , list(negative_html)                                                      ,
+    grepl("braak", name) & x == 1                                              , list(positive_html)                                                      ,
     # grepl("braak", name) & x == 0                 , list(list(icon = negative_html$icon, text = "Clearly negative (0)"))     ,
     # grepl("braak", name) & x == 1                 , list(list(icon = negative_html$icon, text = "Clearly negative (1)"))     ,
     # grepl("braak", name) & x == 2                 , list(list(text = "Ambiguous/Indeterminate"))                             ,
     # grepl("braak", name) & x == 3                 , list(positive_html)                                                      ,
-    grepl("nav4694_visual_ratings", name) & x %in% c(0, 1, 2) , list(negative_html)                                                      ,
-    grepl("nav4694_visual_ratings", name) & x == 3            , list(positive_html)                                                      ,
-    grepl("pib_visual_ratings", name) & x == 0                , list(list(icon = negative_html$icon, text = "Clearly PiB negative (0)")) ,
-    grepl("pib_visual_ratings", name) & x == 1                , list(list(icon = negative_html$icon, text = "Clearly PiB negative (1)")) ,
-    grepl("pib_visual_ratings", name) & x == 2                , list(list(text = "Ambiguous/Indeterminate"))                             ,
-    grepl("pib_visual_ratings", name) & x == 3                , list(list(icon = positive_html$icon, text = "PiB+"))                     ,
-    x %in% c("Positive", "SAA+")                              , list(positive_html)                                                      ,
-    x %in% c("Negative", "SAA-")                              , list(negative_html)                                                      ,
-    x == "Indeterminate"                                      , list(list(text = "Indeterminate"))                                       ,
-    x == "Unavailable"                                        , list(list(text = "Unavailable"))                                         ,
-    x == "Likely Positive"                                    , list(likely_positive_html)                                               ,
+    grepl("nav4694_visual_ratings", name) & x %in% c(0, 1, 2)                  , list(negative_html)                                                      ,
+    grepl("nav4694_visual_ratings", name) & x == 3                             , list(positive_html)                                                      ,
+    grepl("pib_visual_ratings", name) & x == 0                                 , list(list(icon = negative_html$icon, text = "Clearly PiB negative (0)")) ,
+    grepl("pib_visual_ratings", name) & x == 1                                 , list(list(icon = negative_html$icon, text = "Clearly PiB negative (1)")) ,
+    grepl("pib_visual_ratings", name) & x == 2                                 , list(list(text = "Ambiguous/Indeterminate"))                             ,
+    grepl("pib_visual_ratings", name) & x == 3                                 , list(list(icon = positive_html$icon, text = "PiB+"))                     ,
+    x %in% c("Positive", "SAA+")                                               , list(positive_html)                                                      ,
+    x %in% c("Negative", "SAA-")                                               , list(negative_html)                                                      ,
+    x == "Indeterminate"                                                       , list(list(text = "Indeterminate"))                                       ,
+    x == "Unavailable"                                                         , list(list(text = "Unavailable"))                                         ,
+    x == "Likely Positive"                                                     , list(likely_positive_html)                                               ,
     default = list(list())
   )
-
-  # if (all(x %in% 0:5)) {
-  #   out <- list(
-  #     "0" = list(
-  #       icon = negative_html$icon,
-  #       text = "Clearly negative (0)"
-  #     ),
-  #     "1" = list(
-  #       icon = negative_html$icon,
-  #       text = "Clearly negative (1)"
-  #     ),
-  #     "2" = list(
-  #       text = 'Ambiguous/Indeterminate'
-  #     ),
-  #     "3" = positive_html,
-  #     "5" = list()
-  #   )[as.character(x)]
-  # }
-
-  # if (x %in% c("Positive", "SAA+")) {
-  #   return(positive_html)
-  # }
-  # if (x %in% c("Negative", "SAA-")) {
-  #   return(negative_html)
-  # }
-  # if (x == "Likely Positive") {
-  #   return(likely_positive_html)
-  # }
-
-  # NA
 }
 
 #' Transform a table to a gt object

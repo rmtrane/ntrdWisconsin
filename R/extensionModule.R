@@ -30,43 +30,62 @@ extension_ui <- function(id = "wisconsin-extension", pa = TRUE) {
       });
     "
         )),
-        shiny::tags$div(
-          style = "display: flex; align-items: center; gap: 8px; margin-left: 12px;",
-          shiny::tags$h3("Plasma", style = "margin: 0px;"),
-          shiny::tags$a(
-            href = "https://panda.medicine.wisc.edu/system/datadictionary2s/1368/original/report_biofluid_status_2026-02.pdf",
-            target = "_blank",
-            shiny::span(
-              shiny::icon("external-link-alt"),
-              `data-bs-toggle` = "tooltip",
-              `data-placement` = "top",
-              title = "Opens documentation in a new tab"
+        shiny::tags$br(),
+        biomarker_ui(
+          shiny::NS(id, "Plasma"),
+          title = shiny::tags$div(
+            style = "display: flex; align-items: center;",
+            shiny::tags$span(
+              style = "color: var(--bs-body-color); font-weight: 600; font-size: 1rem;",
+              class = "nav-link disabled nav-title",
+              "Plasma"
+            ),
+            shiny::tags$a(
+              href = "https://panda.medicine.wisc.edu/system/datadictionary2s/1368/original/report_biofluid_status_2026-02.pdf",
+              target = "_blank",
+              shiny::span(
+                shiny::icon("external-link-alt"),
+                `data-bs-toggle` = "tooltip",
+                `data-placement` = "top",
+                title = "Opens documentation in a new tab"
+              )
             )
           )
         ),
-        biomarker_ui(shiny::NS(id, "Plasma")),
         hr_el,
-        shiny::tags$div(
-          style = "display: flex; align-items: center; gap: 8px; margin-left: 12px; margin-top: 24px;",
-          shiny::tags$h3("CSF", style = "margin: 0px;"),
-          shiny::tags$a(
-            href = "https://panda.medicine.wisc.edu/system/datadictionary2s/1368/original/report_biofluid_status_2026-02.pdf",
-            target = "_blank",
-            shiny::span(
-              shiny::icon("external-link-alt"),
-              `data-bs-toggle` = "tooltip",
-              `data-placement` = "top",
-              title = "Opens documentation in a new tab"
+        biomarker_ui(
+          shiny::NS(id, "CSF"),
+          title = shiny::tags$div(
+            style = "display: flex; align-items: center;",
+            shiny::tags$span(
+              style = "color: var(--bs-body-color); font-weight: 600; font-size: 1rem;",
+              class = "nav-link disabled nav-title",
+              "CSF"
+            ),
+            shiny::tags$a(
+              href = "https://panda.medicine.wisc.edu/system/datadictionary2s/1368/original/report_biofluid_status_2026-02.pdf",
+              target = "_blank",
+              shiny::span(
+                shiny::icon("external-link-alt"),
+                `data-bs-toggle` = "tooltip",
+                `data-placement` = "top",
+                title = "Opens documentation in a new tab"
+              )
             )
           )
         ),
-        biomarker_ui(shiny::NS(id, "CSF")),
         hr_el,
-        shiny::tags$div(
-          style = "display: flex; align-items: center; gap: 8px; margin-left: 12px;",
-          shiny::tags$h3("Visual ratings", style = "margin: 0px;")
-        ),
-        biomarker_ui(shiny::NS(id, "Visual Ratings"))
+        biomarker_ui(
+          shiny::NS(id, "Visual Ratings"),
+          title = shiny::tags$div(
+            style = "display: flex; align-items: center;",
+            shiny::tags$span(
+              style = "color: var(--bs-body-color); font-weight: 600; font-size: 1rem;",
+              class = "nav-link disabled nav-title",
+              "Visual Ratings"
+            )
+          )
+        )
       ))
     },
     list(bslib::nav_panel(
