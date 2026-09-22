@@ -191,7 +191,10 @@ test_that("NULL list entries are dropped", {
 
 test_that("a 'No values found' table renders as a no-values row", {
   html <- render(
-    list(csf = make_bio_tab_csf(), plasma = bio_tab_for_gt(NULL)),
+    list(
+      csf = make_bio_tab_csf(),
+      plasma = bio_tab_for_gt(NULL)
+    ),
     densities = make_bio_densities(),
     cuts = make_bio_cuts()
   )

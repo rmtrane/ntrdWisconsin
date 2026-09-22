@@ -18,6 +18,10 @@ bio_tab_for_gt <- function(
     return(tab)
   }
 
+  if (inherits(tab, "error-message")) {
+    return(data.table::data.table(name = unclass(tab)))
+  }
+
   no_val_dt <- data.table::data.table(
     name = "No values found",
     name_label = "No values found"
@@ -27,17 +31,6 @@ bio_tab_for_gt <- function(
     return(no_val_dt)
   }
 
-  # Remove missing dates
-  tab <- tab[!is.na(date)]
-
-  if (nrow(tab) == 0) {
-    return(no_val_dt)
-  }
-
-  if (inherits(tab, "error-message")) {
-    return(data.table::data.table(name = unclass(tab)))
-  }
-
   if (!inherits(tab, "data.table")) {
     cli::cli_abort(
       "{.arg tab} must be of class {.cls data.table}, but is of class {.cls {class(tab)}}"
@@ -45,6 +38,13 @@ bio_tab_for_gt <- function(
   }
 
   tab <- data.table::copy(tab)
+
+  # Remove missing dates
+  tab <- tab[!is.na(date)]
+
+  if (nrow(tab) == 0) {
+    return(no_val_dt)
+  }
 
   # Rename age column
   names(tab)[which(names(tab) == "age")] <- "Age_raw"
@@ -183,113 +183,6 @@ html_cat <- function(x, name) {
     default = list(list())
   )
 }
-
-#' Transform a table to a gt object
-#'
-#' @description
-#' Converts a formatted biomarker `data.table` (or list of `data.table`s) into
-#' a styled [gt::gt()] table, using list names as row groups when applicable.
-#'
-#' @param tab_for_gt A `data.table` or a `list` of `data.table`s.
-#'
-#' @returns
-#' A `gt::gt` table. If `tab_for_gt` is a list, the names of the list are used as
-#' grouping variable for table.
-#'
-#' @keywords internal
-bio_tab_to_gt <- function(tab_for_gt) {
-  if (is.list(tab_for_gt) & !inherits(tab_for_gt, "data.table")) {
-    tab_for_gt <- tab_for_gt[!unlist(lapply(tab_for_gt, is.null))]
-
-    tab_for_gt <- lapply(tab_for_gt, \(x) {
-      if (inherits(x, "try-error")) {
-        x <- data.table::data.table(
-          name = x[1]
-        )
-      }
-
-      x
-    })
-
-    if (!all(sapply(tab_for_gt, data.table::is.data.table))) {
-      non_dts <- tab_for_gt[!sapply(tab_for_gt, data.table::is.data.table)]
-
-      cli::cli_abort(
-        "When {.arg tab_for_gt} is of class {.cls list}, all elements must be of class {.cls data.table}, but {.val {names(non_dts)}} {?is/are} of class {.cls {unlist(sapply(non_dts, class))}}"
-      )
-    }
-
-    tab_for_gt <- data.table::rbindlist(
-      tab_for_gt,
-      fill = TRUE,
-      idcol = "table"
-    )
-
-    visit_dates <- setdiff(names(tab_for_gt), c("name", "table"))
-
-    tab_for_gt <- tab_for_gt[, c("table", "name", sort(visit_dates)), with = F]
-  }
-
-  group <- if ("table" %in% names(tab_for_gt)) "table"
-
-  if (!is.null(group)) {
-    age_rows <- tab_for_gt[tab_for_gt$name == "Age"]
-
-    age_rows$table <- NULL
-    age_rows <- unique(age_rows[,
-      c("table", names(.SD)) := c(
-        "",
-        lapply(.SD, \(x) unique(na.omit(x)))
-      )
-    ])
-
-    tab_for_gt <- data.table::rbindlist(
-      list(age_rows, tab_for_gt[tab_for_gt$name != "Age"]),
-      fill = TRUE
-    )
-  }
-
-  gt::gt(
-    id = "biomarker-table",
-    tab_for_gt,
-    rowname_col = "name",
-    groupname_col = group
-  ) |>
-    gt::tab_stub_indent(
-      rows = 1:nrow(tab_for_gt),
-      indent = if (!is.null(group)) 4
-    ) |>
-    gt::fmt(
-      fns = \(x) sapply(x, gt::html),
-      rows = tab_for_gt$name != "Age"
-    ) |>
-    gt::fmt(
-      fns = \(x) paste(floor(as.numeric(x)), "years"),
-      rows = tab_for_gt$name == "Age",
-      columns = -"name"
-    ) |>
-    gt::cols_align(align = "left") |>
-    gt::tab_style(
-      style = list(
-        gt::cell_borders(
-          sides = "right",
-          style = "hidden"
-        ),
-        gt::cell_text(align = "left")
-      ),
-      locations = gt::cells_stub()
-    ) |>
-    gt::tab_style(
-      style = gt::cell_text(style = "italic"),
-      locations = gt::cells_row_groups()
-    ) |>
-    gt::tab_style(
-      style = gt::cell_text(weight = "bold"),
-      locations = gt::cells_column_labels()
-    ) |>
-    gt::sub_missing()
-}
-
 
 #' Fetch all biomarker values from Panda
 #'
@@ -526,7 +419,7 @@ get_all_cuts <- function(all_values) {
 #'
 #' @keywords internal
 get_all_densities <- function(x) {
-  if (is.null(x) | nrow(x) == 0 | inherits(x, "try-error")) {
+  if (is.null(x) || nrow(x) == 0 || inherits(x, "try-error")) {
     return(NULL)
   }
 

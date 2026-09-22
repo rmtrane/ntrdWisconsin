@@ -27,6 +27,10 @@ data_source_server <- S7::new_external_generic(
 #'
 #' @export
 S7::method(data_source_server, wadrc_source) <- function(source, id) {
+  wadrc_source_server(id)
+}
+
+wadrc_source_server <- function(id) {
   shiny::moduleServer(id, function(input, output, session) {
     params <- shiny::reactive({
       shiny::req(input$uds2_api_token)

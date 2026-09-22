@@ -32,6 +32,10 @@ S7::method(data_load, wadrc_source) <- function(
   uds4_api_token,
   ...
 ) {
+  load_wadrc_source(uds2_api_token, uds3_api_token, uds4_api_token)
+}
+
+load_wadrc_source <- function(uds2_api_token, uds3_api_token, uds4_api_token) {
   prepped_list <- Filter(
     Negate(is.null),
     list(
