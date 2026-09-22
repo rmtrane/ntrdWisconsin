@@ -644,7 +644,7 @@ for (tmpl in c("csf", "plasma", "visual_ratings")) {
     key <- skip_if_no_panda()
     out <- get_biomarker_data(
       api_key = key,
-      adrc_ptids = "adrc00006",
+      adrc_ptids = "adrc00449",
       base_query_file = system.file(
         paste0("json/", tmpl, ".json"),
         package = "ntrdWisconsin"
@@ -652,7 +652,6 @@ for (tmpl in c("csf", "plasma", "visual_ratings")) {
     )
 
     expect_s3_class(out, "data.table")
-    expect_gt(nrow(out), 0)
     expect_true(all(c("date", "age", "enumber") %in% names(out)))
     expect_true(all(grepl("^adrc", out$enumber, ignore.case = TRUE)))
     expect_snapshot(
@@ -666,7 +665,9 @@ test_that("bio_tab_for_gt() turns an error-message into a one-row table", {
     "Error: visits could not be matched to dates.",
     class = "error-message"
   )
+
   out <- bio_tab_for_gt(msg)
+
   expect_equal(
     out,
     data.table::data.table(

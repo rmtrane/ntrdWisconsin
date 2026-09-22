@@ -44,6 +44,40 @@ biomarker_ui <- function(
   )
 }
 
+# User-facing message for a failed Panda pull. get_biomarker_data() returns a
+# try-error or an HTTP status code on failure; an error thrown inside the task
+# arrives as a condition.
+pull_failure_message <- function(x) {
+  if (inherits(x, "try-error") && inherits(attr(x, "condition"), "condition")) {
+    x <- attr(x, "condition")
+  }
+  detail <- if (inherits(x, "condition")) {
+    conditionMessage(x)
+  } else if (is.numeric(x)) {
+    paste("HTTP status", x)
+  } else {
+    as.character(x)
+  }
+  paste(
+    "Could not retrieve data from Panda:",
+    trimws(gsub("\\s+", " ", detail))
+  )
+}
+
+# TRUE for the error a pull rejects with after mirai::stop_mirai(): the mirai
+# resolves to errorValue 20, which becomes stop("20 | Operation canceled").
+is_cancellation <- function(e) {
+  inherits(e, "condition") && startsWith(conditionMessage(e), "20 | ")
+}
+
+# One-row table carrying only a message, e.g. "No values found".
+message_table <- function(msg) {
+  bio_tab_to_html_table(
+    data.table::data.table(name = msg, name_label = msg),
+    tab_header = ""
+  )
+}
+
 biomarker_server <- function(
   id = "CSF",
   base_query_file = "inst/json/csf.json",
@@ -86,6 +120,7 @@ biomarker_server <- function(
 
     all_densities <- shiny::reactiveVal()
     all_cuts <- shiny::reactiveVal()
+    pull_error <- shiny::reactiveVal()
 
     # When ptid or biomarker_api is updated, invoke the ExtendedTask
     shiny::observe({
@@ -107,6 +142,10 @@ biomarker_server <- function(
       if (
         is.null(cur_ptid) | (cur_ptid != "" && !cur_ptid %in% names(bio_tables))
       ) {
+        # if (bio_dat$status() == "running") {
+        #   # shiny::showNotification(ui = "Restarting biomarker pull")
+        #   mirai::stop_mirai(mm)
+        # }
         # Invoke, i.e. evaluate the ExtendedTask
         bio_dat$invoke(
           api = api_token(),
@@ -120,10 +159,25 @@ biomarker_server <- function(
       )
 
     shiny::observe({
-      # If ExtendedTask successfully ran...
+      # If the task threw an error, or returned a failure value, record it.
+      if (bio_dat$status() == "error") {
+        err <- tryCatch(bio_dat$result(), error = identity)
 
+        if (!is_cancellation(err)) {
+          pull_error(pull_failure_message(err))
+        }
+      }
+
+      # If ExtendedTask successfully ran...
       if (bio_dat$status() == "success") {
         bio_dat_res <- bio_dat$result()
+
+        if (!data.table::is.data.table(bio_dat_res)) {
+          pull_error(pull_failure_message(bio_dat_res))
+          return()
+        }
+
+        pull_error(NULL)
 
         # if (id == "Visual Ratings") {
         #   browser()
@@ -174,6 +228,10 @@ biomarker_server <- function(
         return(loading_gt)
       }
 
+      if (!is.null(pull_error()) && !tolower(ptid()) %in% names(bio_tables)) {
+        return(message_table(pull_error()))
+      }
+
       # if (id == "Visual Ratings" & tolower(ptid()) == "adrc01102") {
       #   browser()
       # }
@@ -202,7 +260,12 @@ biomarker_server <- function(
         return(loading_gt)
       }
 
-      bio_dat_res <- bio_dat$result()
+      if (!is.null(pull_error()) && !tolower(ptid()) %in% names(bio_tables)) {
+        return(message_table(pull_error()))
+      }
+
+      # bio_dat_res <- bio_dat$result()
+      pt_dat <- bio_tables[[tolower(ptid())]]
 
       if (tolower(ptid()) %in% names(bio_tables) || isTRUE(batch_loading)) {
         plot_vars_labs_cutnames <- data.table::data.table(
@@ -232,44 +295,40 @@ biomarker_server <- function(
           )
         )
 
-        if (all(!plot_vars_labs_cutnames$y %in% names(bio_dat_res))) {
-          return(
-            data.table::data.table(
-              name = "No values found",
-              name_label = "No values found"
-            ) |>
-              bio_tab_to_html_table(
-                tab_header = ""
-              )
-          )
+        # if (all(!plot_vars_labs_cutnames$y %in% names(bio_dat_res))) {
+        #   return(message_table("No values found"))
+        # }
+
+        if (all(!plot_vars_labs_cutnames$y %in% names(pt_dat))) {
+          return(message_table("No values found"))
         }
 
-        n_obs <- bio_dat_res[
-          enumber == ptid(),
+        n_obs <- pt_dat[,
           sum(unlist(lapply(.SD, \(x) sum(!is.na(x))))),
           .SDcols = intersect(
             plot_vars_labs_cutnames$y,
-            names(bio_dat_res)
+            names(pt_dat)
           )
         ]
 
+        # n_obs <- bio_dat_res[
+        #   enumber == ptid(),
+        #   sum(unlist(lapply(.SD, \(x) sum(!is.na(x))))),
+        #   .SDcols = intersect(
+        #     plot_vars_labs_cutnames$y,
+        #     names(bio_dat_res)
+        #   )
+        # ]
+
         if (n_obs == 0) {
-          return(
-            data.table::data.table(
-              name = "No values found",
-              name_label = "No values found"
-            ) |>
-              bio_tab_to_html_table(
-                tab_header = ""
-              )
-          )
+          return(message_table("No values found"))
         }
 
         long_bio_plots <- purrr::pmap(
-          plot_vars_labs_cutnames[y %in% names(bio_dat_res)],
+          plot_vars_labs_cutnames[y %in% names(pt_dat)], # names(bio_dat_res)
           \(y, y_lab, cut_name) {
             long_bio_plot(
-              dat = bio_dat_res[enumber == ptid()],
+              dat = pt_dat, # bio_dat_res[enumber == ptid()],
               y_val = y,
               dens = all_densities()[[y]],
               cuts = all_cuts()[[1]][name == cut_name],
@@ -287,7 +346,7 @@ biomarker_server <- function(
           margin = c(0, 0, 0.075, 0.075)
         ) |>
           add_row_titles(
-            titles = plot_vars_labs_cutnames[y %in% names(bio_dat_res)]$y_lab
+            titles = plot_vars_labs_cutnames[y %in% names(pt_dat)]$y_lab # names(bio_dat_res)]$y_lab
           ) |>
           on_render(long_bio_plot_js)
 
@@ -295,7 +354,7 @@ biomarker_server <- function(
 
         p
       } else {
-        cli::cli_inform("{bio_dat$status()")
+        cli::cli_inform("{bio_dat$status()}")
       }
     })
   })

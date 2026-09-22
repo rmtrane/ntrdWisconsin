@@ -240,6 +240,7 @@ extension_app <- function(
     srv <- extension_server(
       "ext-module",
       ptid = shiny::reactive(input$current_studyid),
+      dat = dat,
       extras = shiny::reactive(
         list(
           panda_api_token = biomarker_api()
