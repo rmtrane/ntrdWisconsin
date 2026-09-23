@@ -150,9 +150,9 @@ make_biomarker_empty <- function() {
 # 1-row, everything NA -> "no non-missing biomarker data found." error-message.
 make_biomarker_all_na <- function() {
   data.table::data.table(
-    date_csf = NA_character_,
-    age_at_appointment = NA_character_,
-    enumber = NA_character_,
+    date_csf = "2021-05-12",
+    age_at_appointment = "70",
+    enumber = "adrc99999",
     status_csf_lumi_ratio_fda = NA_character_,
     csf_ratio_lumi_ab42_ab40 = NA_character_
   )
@@ -166,6 +166,47 @@ make_biomarker_csf <- function() {
     enumber = "adrc00006",
     status_csf_lumi_ratio_fda = "Positive", # -> factor, renamed *_cat
     csf_ratio_lumi_ab42_ab40 = "0.052" # -> numeric, renamed *_raw
+  )
+}
+
+# 1-row plasma happy path. One of each status column (-> factor) and raw value
+# (-> numeric); plasma_ptau217_lumi is "nan" to exercise the "NA"/"nan" -> NA
+# scrub.
+make_biomarker_plasma <- function() {
+  data.table::data.table(
+    date_plasma = "2022-03-10",
+    age_at_appointment = "68",
+    enumber = "adrc00010",
+    status_plasma_lumi_ratio_fda = "Negative",
+    plasma_ratio_lumi_ptau_ab42 = "0.0071",
+    status_plasma_hdx_ptau_ashton = "Positive",
+    plasma_ptau217_hdx = "0.63",
+    status_plasma_hdx_ptau_local = "Indeterminate",
+    status_plasma_lumi_ptau_local = "Unavailable",
+    plasma_ptau217_lumi = "nan"
+  )
+}
+
+# 3-row visual-ratings happy path. Braak values use the spellings the 0/1
+# recode accepts ("true"/"TRUE"/"Y" -> 1, "false"/"N" -> 0) plus one invalid
+# value ("maybe" -> NA). Expected braak_positive_cat per row:
+#   row 1: 1,1,0,0,0,0  -> "Borderline (MTL only)"
+#   row 2: 1,1,1,0,0,0  -> "Elevated (MTL + Neocortical)"
+#   row 3: NA,0,0,0,0,0 -> NA
+make_biomarker_visual_ratings <- function() {
+  data.table::data.table(
+    petscan_date = c("2021-05-01", "2022-06-15", "2023-07-20"),
+    age_at_appointment = c("70", "71.5", "73"),
+    enumber = c("adrc00001", "adrc00002", "adrc00003"),
+    braak_1 = c("true", "Y", "maybe"),
+    braak_2 = c("true", "TRUE", "false"),
+    braak_3 = c("false", "true", "N"),
+    braak_4 = c("N", "false", "N"),
+    braak_5 = c("N", "false", "N"),
+    braak_6 = c("N", "false", "N"),
+    comment = c("Tau in MTL", NA, "nan"),
+    nav4694_visual_ratings = c("Positive", "Negative", NA),
+    pib_visual_ratings_20180126 = c("Negative", "Positive", "NA")
   )
 }
 
@@ -216,5 +257,66 @@ make_prepped_pull <- function() {
     REY3REC = c(6, 6, 3),
     REY4REC = c(7, 8, 4),
     REY5REC = c(9, 9, 5)
+  )
+}
+
+
+# A toy "density": y = x on the grid x = 0, 0.1, ..., 1. It doesn't integrate to
+# 1, but density_plot() never assumes it does, and y = x makes every derived
+# number easy to check by hand (inserted-cut y values, the percentile sum).
+make_density_fixture <- function() {
+  x <- seq(0, 1, by = 0.1)
+  list(x = x, y = x, n = 100, bw = 0.05)
+}
+
+# Three regions with cuts at 0.45 and 0.75, both OFF the 0.1 grid so the
+# cut-insertion branch runs. Colours use the "alpha" placeholder that
+# density_plot() replaces with 0.9 (highlighted) or 0.4 (not).
+make_density_cuts <- function() {
+  data.table::data.table(
+    color = c(
+      "rgba(0,128,0,alpha)",
+      "rgba(255,165,0,alpha)",
+      "rgba(255,0,0,alpha)"
+    ),
+    min_obs = c(0, 0.45, 0.75),
+    max_obs = c(0.45, 0.75, 1)
+  )
+}
+
+
+# The list-valued date cells bio_tab_to_html_table() expects are produced by
+# bio_tab_for_gt() (R/query_panda.R). Rather than hand-build that structure,
+# these run the real pipeline on the item 10 fixtures:
+#   make_biomarker_*() -> clean_biomarker_data() -> bio_tab_for_gt()
+
+# One CSF visit (2021-05-01, age 70) with one biomarker that has a raw value
+# (csf_ratio_lumi_ab42_ab40_fda = 0.052), so its cell gets a density plot.
+make_bio_tab_csf <- function() {
+  bio_tab_for_gt(clean_biomarker_data(make_biomarker_csf(), "csf", NULL))
+}
+
+# Three visual-ratings visits with Braak rows (categorical only, no raw values),
+# for the section-header logic.
+make_bio_tab_visual <- function() {
+  bio_tab_for_gt(clean_biomarker_data(
+    make_biomarker_visual_ratings(),
+    "visual_ratings",
+    NULL
+  ))
+}
+
+# Flat densities list keyed "<name>_raw", as looked up when the table name
+# isn't itself a key of `densities`. Reuses the item 11 toy density.
+make_bio_densities <- function() {
+  list(csf_ratio_lumi_ab42_ab40_fda_raw = make_density_fixture())
+}
+
+# Cuts as a single data.table with a `name` column (the shape biomarkerModule
+# passes as all_cuts()[[1]]). Reuses the item 11 regions.
+make_bio_cuts <- function() {
+  cbind(
+    data.table::data.table(name = "csf_ratio_lumi_ab42_ab40_fda"),
+    make_density_cuts()
   )
 }

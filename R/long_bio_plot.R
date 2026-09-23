@@ -379,7 +379,7 @@ add_row_titles <- function(fig, titles, font_size = 13) {
     )
   })
 
-  plotly::layout(fig, annotations = c(b$x$layout$annotations, new_anns))
+  plotly::layout(fig, annotations = new_anns)
 }
 
 
