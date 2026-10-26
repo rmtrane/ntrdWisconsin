@@ -1,3 +1,11 @@
+# ntrdWisconsin 0.1.5
+
+Bug fixes:
+
+* Changed what Panda table is used for fetching participant IDs
+
+* Error messages from Panda handled better
+
 # ntrdWisconsin 0.1.4
 
 Changes:
