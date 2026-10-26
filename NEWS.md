@@ -1,5 +1,9 @@
 # ntrdWisconsin 0.1.5
 
+New feature:
+
+* Now include update banner which shows when new update is available.
+
 Bug fixes:
 
 * Changed what Panda table is used for fetching participant IDs
