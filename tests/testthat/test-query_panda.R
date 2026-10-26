@@ -530,11 +530,13 @@ test_that("get_biomarker_data() returns the status for a non-200 success code", 
 
 test_that("get_biomarker_data() returns just the IDs when Panda has no rows", {
   local_perform(fake_panda_response("[]"))
+
   out <- get_biomarker_data(
     "k",
     base_query_file = csf_json(),
     adrc_ptids = "adrc00006"
   )
+
   expect_equal(
     out,
     data.table::data.table(enumber = "adrc00006"),
@@ -553,6 +555,7 @@ test_that("get_biomarker_data() cleans the rows, keeping only ADRC IDs", {
       csf_ratio_lumi_ab42_ab40 = "0.09"
     )
   )
+
   local_perform(fake_panda_response(as.character(jsonlite::toJSON(rows))))
 
   out <- get_biomarker_data("k", base_query_file = csf_json())
@@ -588,7 +591,7 @@ test_that("get_biomarker_data() sends an authorised POST with the template", {
 
 enrollment_constraint <- function(req) {
   tabs <- req$body$data$query$tables
-  enr <- tabs[tabs$name == "Enrollments", ]
+  enr <- tabs[tabs$name == "Participants", ]
   list(join = enr$join, constraint = enr$columns[[1]]$constraints[[1]])
 }
 

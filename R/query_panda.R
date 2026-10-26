@@ -271,7 +271,8 @@ get_biomarker_data <- function(
     data.table::as.data.table() |>
     data.table::setnames(
       old = "view_participants_adrcnum",
-      new = "enumber"
+      new = "enumber",
+      skip_absent = T
     )
 
   resp <- resp[grepl("^adrc", enumber, ignore.case = TRUE)]
