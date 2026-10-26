@@ -23,7 +23,7 @@ test_that("clean_biomarker_data() errors when all biomarker values are NA", {
   expect_s3_class(out, "error-message")
   expect_match(
     unclass(out),
-    "no non-missing biomarker data",
+    "No values found",
     ignore.case = TRUE
   )
 })

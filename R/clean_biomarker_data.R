@@ -197,7 +197,8 @@ clean_biomarker_data <- function(
       ]
     ))
   ) {
-    out <- "Error: no non-missing biomarker data found."
+    # out <- "Error: no non-missing biomarker data found."
+    out <- "No values found"
     class(out) <- "error-message"
 
     return(out)
