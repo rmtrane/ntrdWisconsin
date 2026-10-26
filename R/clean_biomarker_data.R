@@ -192,7 +192,7 @@ clean_biomarker_data <- function(
   if (
     all(is.na(
       as_df[,
-        !grepl(pattern = "age_|_date", colnames(as_df)),
+        !grepl(pattern = "enumber|age|date", colnames(as_df)),
         with = F
       ]
     ))

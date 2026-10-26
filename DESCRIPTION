@@ -83,5 +83,7 @@ LazyData: true
 Suggests: 
     testthat (>= 3.0.0),
     withr,
-    readr
+    readr,
+    later,
+    promises
 Config/testthat/edition: 3

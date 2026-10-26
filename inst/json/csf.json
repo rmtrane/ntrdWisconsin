@@ -2,14 +2,14 @@
   "query": {
     "tables": [
       {
-        "name": "Enrollments",
-        "id": 1230,
+        "name": "Participants",
+        "id": 679,
         "class": "cg_tn",
         "join": "left",
         "columns": [
           {
-            "name": "enumber",
-            "id": 45350,
+            "name": "Adrc Number",
+            "id": 690,
             "class": "cg_tn_cn",
             "show": true,
             "constraints": []
