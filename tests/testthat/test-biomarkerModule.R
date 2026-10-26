@@ -662,13 +662,13 @@ test_that("pull_failure_message() explains each kind of failure", {
   )
   expect_identical(
     pull_failure_message(failures$thrown),
-    "Could not retrieve data from Panda: cannot open file 'csf.json'"
+    "cannot open file 'csf.json'"
   )
   # A try-error without its condition attribute falls back to its text.
-  bare <- structure("Error : timed out\n", class = "try-error")
+  bare <- structure("Error: timed out\n", class = "try-error")
   expect_identical(
     pull_failure_message(bare),
-    "Could not retrieve data from Panda: Error : timed out"
+    "Error: timed out"
   )
 })
 

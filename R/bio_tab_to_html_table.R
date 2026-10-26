@@ -407,14 +407,14 @@ bio_tab_to_html_table <- function(
                 ),
                 shiny::tags$td()
               )
-            } else if (grepl("^Error|No values found", nam)) {
+            } else if (grepl("^Error|Error:|No values found", nam)) {
               cur_tr <- shiny::tags$tr(
                 class = if (last_row) "last-row",
                 shiny::tags$td(),
                 shiny::tags$td(
                   shiny::HTML(text = nam_lab),
                   class = ifelse(
-                    grepl("^Error", nam),
+                    grepl("^Error|Error:", nam),
                     "error-message",
                     "no-values"
                   ),

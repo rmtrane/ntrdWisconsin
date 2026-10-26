@@ -52,16 +52,22 @@ pull_failure_message <- function(x) {
     x <- attr(x, "condition")
   }
   detail <- if (inherits(x, "condition")) {
-    conditionMessage(x)
+    x <- conditionMessage(x)
+
+    if (grepl("HTTP", x)) {
+      x <- paste("Could not retrieve data from Panda:", x)
+    }
+
+    x
   } else if (is.numeric(x)) {
-    paste("HTTP status", x)
+    paste("Could not retrieve data from Panda: HTTP status", x)
   } else {
     as.character(x)
   }
-  paste(
-    "Could not retrieve data from Panda:",
-    trimws(gsub("\\s+", " ", detail))
-  )
+  #paste(
+  # "Could not retrieve data from Panda:",
+  trimws(gsub("\\s+", " ", detail))
+  #)
 }
 
 # TRUE for the error a pull rejects with after mirai::stop_mirai(): the mirai
@@ -74,7 +80,9 @@ is_cancellation <- function(e) {
 message_table <- function(msg) {
   bio_tab_to_html_table(
     data.table::data.table(name = msg, name_label = msg),
-    tab_header = ""
+    tab_header = "",
+    densities = NULL,
+    cuts = NULL
   )
 }
 
@@ -179,10 +187,6 @@ biomarker_server <- function(
 
         pull_error(NULL)
 
-        # if (id == "Visual Ratings") {
-        #   browser()
-        # }
-
         pt <- tolower(ptid())
 
         for (pt in setdiff(
@@ -228,13 +232,13 @@ biomarker_server <- function(
         return(loading_gt)
       }
 
+      # if (id == "Visual Ratings" & tolower(ptid()) == "adrc00842") {
+      #   browser()
+      # }
+
       if (!is.null(pull_error()) && !tolower(ptid()) %in% names(bio_tables)) {
         return(message_table(pull_error()))
       }
-
-      # if (id == "Visual Ratings" & tolower(ptid()) == "adrc01102") {
-      #   browser()
-      # }
 
       # if batch_loading is TRUE, we always want to enter here since names of bio_tables will be all available ptid's. If not, only enter if ptid is in names of bio_tables list, since unavailable ptid's will still show up with NULL entry.
       if (tolower(ptid()) %in% names(bio_tables) || isTRUE(batch_loading)) {
