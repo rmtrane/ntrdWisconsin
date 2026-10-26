@@ -227,11 +227,11 @@ get_biomarker_data <- function(
 
     json_text <- paste0('[{"operator":"', oper, '","values":[', vals, ']}]')
 
-    all_tabs[all_tabs$name == "Enrollments", ]$columns[[1]]$constraints[[
+    all_tabs[all_tabs$name == "Participants", ]$columns[[1]]$constraints[[
       1
     ]] <- jsonlite::fromJSON(json_text)
 
-    all_tabs[all_tabs$name == "Enrollments", "join"] <- "inner"
+    all_tabs[all_tabs$name == "Participants", "join"] <- "inner"
 
     base_query$query$tables <- all_tabs
   }
@@ -268,7 +268,11 @@ get_biomarker_data <- function(
   }
 
   resp <- jsonlite::fromJSON(resp) |>
-    data.table::as.data.table()
+    data.table::as.data.table() |>
+    data.table::setnames(
+      old = "view_participants_adrcnum",
+      new = "enumber"
+    )
 
   resp <- resp[grepl("^adrc", enumber, ignore.case = TRUE)]
 

@@ -77,7 +77,7 @@ clean_biomarker_data <- function(
     names(.SD) := purrr::imap(
       .SD,
       \(y, idy) {
-        if (idy == "enumber") {
+        if (idy == "adrcnum") {
           return(y)
         }
 
