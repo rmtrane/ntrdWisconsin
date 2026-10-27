@@ -7,8 +7,9 @@
 #'
 #' \itemize{
 #'   \item \code{ntrd_update_available()} compares the installed version of
-#'     ntrdWisconsin against the latest version on GitHub and returns a
-#'     structured list describing whether an update is available.
+#'     ntrdWisconsin against the latest version on GitHub and returns an
+#'     \code{ntrd::update_result} object describing whether an update is
+#'     available.
 #'   \item \code{ntrd_update_extension()} installs the latest version from
 #'     GitHub, including dependency upgrades. It is intended to be called
 #'     from a freshly restarted R session in which ntrdWisconsin is not
@@ -19,8 +20,9 @@
 #' and invokes them when the ntrdWisconsin data source is selected.
 #'
 #' @returns
-#' For \code{ntrd_update_available()}: a list with fields \code{available},
-#' \code{current}, \code{latest}, and \code{news_url}. See
+#' For \code{ntrd_update_available()}: an \code{ntrd::update_result} S7
+#' object, with properties \code{available}, \code{current}, \code{latest},
+#' and \code{news_url}. See
 #' \code{\link[ntrd]{default_github_update_available}} for details.
 #'
 #' For \code{ntrd_update_extension()}: invisibly returns \code{NULL}.
