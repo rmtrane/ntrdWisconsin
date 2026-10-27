@@ -1,3 +1,9 @@
+# ntrdWisconsin (development version)
+
+Documentation changes: 
+
+* Minor fixes in `R/updates.R`.
+
 # ntrdWisconsin 0.1.5
 
 New feature:
